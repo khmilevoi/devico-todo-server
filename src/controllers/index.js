@@ -25,11 +25,11 @@ const configureAuthRouter = () => {
   return router.routes();
 };
 
-export default function configureRouter() {
+export const configureRouter = () => {
   const router = new Router();
 
   router.use(configureTodosRouter());
   router.use(configureAuthRouter());
 
   return [router.routes(), router.allowedMethods()];
-}
+};

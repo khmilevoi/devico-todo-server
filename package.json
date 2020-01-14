@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
     "watch": "webpack --watch",
-    "server": "nodemon dist/main.bundle.js"
+    "server": "nodemon --inspect dist/main.bundle.js"
   },
   "keywords": [],
   "author": "",
@@ -34,6 +34,7 @@
     "koa-logger": "^3.2.1",
     "koa-router": "^7.4.0",
     "mongodb": "^3.4.1",
-    "mongoose": "^5.8.4"
+    "mongoose": "^5.8.4",
+    "socket.io": "^2.3.0"
   }
 }

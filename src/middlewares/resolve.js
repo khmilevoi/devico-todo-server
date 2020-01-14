@@ -1,4 +1,4 @@
-const useResolve = () => {
+export const useResolve = () => {
   function resolve(body) {
     this.body = { ...body, ok: true, status: 200 };
     this.status = 200;
@@ -34,5 +34,3 @@ const useResolve = () => {
     return next();
   };
 };
-
-export default useResolve;

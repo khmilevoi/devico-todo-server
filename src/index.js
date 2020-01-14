@@ -1,61 +1,25 @@
 import dotenv from 'dotenv';
+import http from 'http';
 
-import Koa from 'koa';
-import cors from 'koa-cors';
-import logger from 'koa-logger';
-import mongoose from 'mongoose';
-import bodyParser from 'koa-bodyparser';
-import jwt from 'koa-jwt';
-
-import configureRouter from './controllers';
-import useResolve from './middlewares';
+import { configureKoa } from './configureKoa';
+import { configureMongo } from './configureMongo';
+import { configureSocketIO, clearAllSockets } from './configureSocketIO';
 
 dotenv.config();
 
-const app = new Koa();
+const PORT = process.env.PORT || 3000;
 
-app.use(cors({ methods: '*' }));
-app.use(bodyParser());
-app.use(logger());
-app.use(useResolve());
+const io = configureSocketIO();
 
-app.use((ctx, next) => {
-  console.log('BODY: ', ctx.request.body);
-  console.log('REQUEST: ', ctx.request);
-  console.log(ctx);
-  return next();
-});
+const app = configureKoa(io);
 
-app.use((ctx, next) => next().catch((error) => {
-  if (error.status === 401) {
-    ctx.unauthorized({ message: 'Unauthorized' });
-  } else {
-    throw error;
-  }
-}));
+const server = http.createServer(app.callback());
+io.listen(server);
 
-app.use(jwt({ secret: process.env.SECRET }).unless({ path: [/^\/auth/] }));
+configureMongo();
 
-app.use(...configureRouter());
+server.listen(PORT).on('listening', async () => {
+  console.log(`Connection open t ${PORT}`);
 
-const PORT = 3000;
-
-app.listen(PORT).on('connection', () => {
-  console.log(`Connection open to ${PORT}`);
-});
-
-const connString = 'mongodb://localhost/todo';
-mongoose.connect(connString, {
-  useUnifiedTopology: true,
-  useNewUrlParser: true,
-});
-
-const db = mongoose.connection;
-
-db.once('open', () => {
-  console.log(`Open to ${connString}`);
-});
-
-db.on('error', (err) => {
-  console.log(err);
+  await clearAllSockets();
 });

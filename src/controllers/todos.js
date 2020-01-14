@@ -1,5 +1,7 @@
 import TodoModel from '../models/todo';
 
+import { getAllSockets } from '../configureSocketIO';
+
 const todos = {
   list: async (ctx) => {
     const { owner } = ctx.query;
@@ -21,22 +23,41 @@ const todos = {
 
     const res = await TodoModel.create({ inner, owner });
 
-    ctx.resolve({ res });
+    ctx.resolve();
+
+    const sockets = await getAllSockets(owner);
+
+    sockets.forEach(({ socket }) => {
+      ctx.emit(socket, 'todos', { type: 'add', res });
+    });
   },
   toggle: async (ctx) => {
     const { id } = ctx.params;
 
     const todo = await TodoModel.findById(id);
-    const res = await TodoModel.updateOne(todo, { completed: !todo.completed });
+    await TodoModel.updateOne(todo, { completed: !todo.completed });
 
-    ctx.resolve({ res });
+    ctx.resolve();
+
+    const sockets = await getAllSockets(todo.owner);
+
+    sockets.forEach(({ socket }) => {
+      ctx.emit(socket, 'todos', { type: 'toggle', id });
+    });
   },
   delete: async (ctx) => {
     const { id } = ctx.params;
 
-    const res = await TodoModel.deleteOne({ _id: id });
+    const { owner } = await TodoModel.findById(id);
+    await TodoModel.deleteOne({ _id: id });
 
-    ctx.resolve({ res });
+    ctx.resolve();
+
+    const sockets = await getAllSockets(owner);
+
+    sockets.forEach(({ socket }) => {
+      ctx.emit(socket, 'todos', { type: 'delete', id });
+    });
   },
   update: async (ctx) => {
     const { id } = ctx.params;
@@ -45,9 +66,15 @@ const todos = {
     const { inner } = body;
 
     const todo = await TodoModel.findById(id);
-    const res = await TodoModel.updateOne(todo, { inner });
+    await TodoModel.updateOne(todo, { inner });
 
-    ctx.resolve({ res });
+    ctx.resolve();
+
+    const sockets = await getAllSockets(todo.owner);
+
+    sockets.forEach(({ socket }) => {
+      ctx.emit(socket, 'todos', { type: 'update', id, inner });
+    });
   },
 };
 

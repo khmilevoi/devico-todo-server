@@ -1,3 +1,2 @@
-import useResolve from './resolve';
-
-export default useResolve;
+export { useResolve } from './resolve';
+export { useEmit } from './emit';

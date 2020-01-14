@@ -25,6 +25,7 @@ module.exports = {
     'no-return-assign': 0,
     'no-debugger': 0,
     'import/named': 0,
-    'flowtype/no-types-missing-file-annotation': 0
+    'flowtype/no-types-missing-file-annotation': 0,
+    'no-return-await': 0
   }
 };
