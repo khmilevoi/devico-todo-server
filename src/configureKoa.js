@@ -17,12 +17,6 @@ export const configureKoa = (io) => {
   app.use(useResolve());
   app.use(useEmit(io));
 
-  app.use((ctx, next) => {
-    console.log('BODY: ', ctx.request.body);
-    console.log('REQUEST: ', ctx.request);
-    return next();
-  });
-
   app.use((ctx, next) => next().catch((error) => {
     if (error.status === 401) {
       ctx.unauthorized({ message: 'Unauthorized' });
@@ -36,6 +30,22 @@ export const configureKoa = (io) => {
       path: [/^\/(auth|socket.io)/],
     }),
   );
+
+  app.use((ctx, next) => {
+    const { user } = ctx.state;
+    const { data } = user;
+
+    ctx.tokenData = data;
+
+    return next();
+  });
+
+  app.use((ctx, next) => {
+    console.log('BODY: ', ctx.request.body);
+    console.log('REQUEST: ', ctx.request);
+
+    return next();
+  });
 
   app.use(...configureRouter());
 

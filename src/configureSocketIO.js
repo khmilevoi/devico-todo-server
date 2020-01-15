@@ -1,7 +1,9 @@
 import socket from 'socket.io';
 import jsonwebtoken from 'jsonwebtoken';
 
-import Socket from './models/socket';
+import SocketModel from './models/socket';
+import RoleModel from './models/role';
+import ListModel from './models/list';
 
 const logger = (socket) => {
   console.log('\x1b[32m%s\x1b[0m', `${socket.id} connected`);
@@ -11,9 +13,38 @@ const logger = (socket) => {
   });
 };
 
-export const getAllSockets = (user) => Socket.find({ user });
+export const getAllSockets = (user) => SocketModel.find({ user });
 
-export const clearAllSockets = () => Socket.deleteMany({});
+export const clearAllSockets = () => SocketModel.deleteMany({});
+
+export const emitAllOwners = async (ownerId, callback) => {
+  const roles = RoleModel.find({ owner: ownerId });
+
+  roles.forEach(({ owner }) => {
+    const sockets = getAllSockets(owner);
+
+    sockets.forEach((socket) => callback(socket, owner));
+  });
+};
+
+export const verifyUser = async (owner, listId) => {
+  const role = await RoleModel.find({ owner, list: listId });
+
+  if (role && role.type === 'creator') {
+    return true;
+  }
+  if (!role) {
+    return false;
+  }
+
+  const list = await ListModel.findById(listId);
+
+  if (list && list.public === true) {
+    return true;
+  }
+
+  return false;
+};
 
 export const addSocket = async (token, socket) => {
   try {
@@ -22,17 +53,17 @@ export const addSocket = async (token, socket) => {
 
     const row = { user, socket };
 
-    const exist = await Socket.exists(row);
+    const exist = await SocketModel.exists(row);
 
     if (!exist) {
-      await Socket.create(row);
+      await SocketModel.create(row);
     }
   } catch (error) {
     console.log('jwt incorrect');
   }
 };
 
-export const deleteSocket = (socket) => Socket.deleteOne({ socket });
+export const deleteSocket = (socket) => SocketModel.deleteOne({ socket });
 
 export const configureSocketIO = () => {
   const io = socket({ origins: '*:*' });

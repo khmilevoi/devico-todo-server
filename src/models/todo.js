@@ -5,7 +5,7 @@ const { Schema } = mongoose;
 const TodoSchema = new Schema({
   inner: { type: String },
   completed: { type: Boolean, default: false },
-  owner: { type: String },
+  list: { type: String },
 });
 
 const Todo = mongoose.model('Todo', TodoSchema);
