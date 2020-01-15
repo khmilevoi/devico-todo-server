@@ -33,9 +33,12 @@ export const configureKoa = (io) => {
 
   app.use((ctx, next) => {
     const { user } = ctx.state;
-    const { data } = user;
 
-    ctx.tokenData = data;
+    if (user) {
+      const { data } = user;
+
+      ctx.tokenData = data;
+    }
 
     return next();
   });

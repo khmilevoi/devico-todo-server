@@ -5,12 +5,13 @@ import todosController from './todos';
 import authController from './auth';
 
 const configureListRouter = () => {
-  const router = new Router({ prefix: '/list' });
+  const router = new Router({ prefix: '/lists' });
 
   router.get('/', listController.get);
   router.post('/', listController.add);
   router.put('/:id', listController.toggle);
-  router.delete('/:id', todosController.delete);
+  router.delete('/:id', listController.delete);
+  router.patch('/:id', listController.share);
 
   return router.routes();
 };
