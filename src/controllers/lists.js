@@ -12,17 +12,19 @@ const lists = {
 
     const roles = await RoleModel.find({ owner });
 
-    await Promise.all(
-      roles.map(async ({ list: listId, type }) => {
-        const list = await ListModel.findById(listId);
+    const lists = roles.map(({ list }) => list);
 
-        if (type === 'creator') {
-          personal.push(list);
-        } else if (type === 'guest') {
-          shared.push(list);
-        }
-      }),
-    );
+    const listsInformation = await ListModel.find({ _id: { $in: lists } });
+
+    roles.forEach(({ type, list: listId }) => {
+      const list = listsInformation.find((item) => item.id === listId);
+
+      if (type === 'creator') {
+        personal.push(list);
+      } else if (type === 'guest') {
+        shared.push(list);
+      }
+    });
 
     ctx.resolve({ personal, shared });
   },
@@ -33,7 +35,7 @@ const lists = {
     const { id: owner } = ctx.tokenData;
 
     const list = await ListModel.create({ name });
-    await RoleModel.create({ list: list._id, owner, type: 'creator' });
+    await RoleModel.create({ list: list.id, owner, type: 'creator' });
 
     ctx.resolve();
 
@@ -52,7 +54,7 @@ const lists = {
 
     if (role && role.type === 'creator') {
       await RoleModel.deleteMany({ list: id });
-      await ListModel.deleteOne({ _id: id });
+      await ListModel.deleteOne({ id });
 
       ctx.resolve();
 
@@ -106,6 +108,8 @@ const lists = {
         });
 
         ctx.resolve();
+      } else {
+        // ctx.badRequest({ message: 'You don`t have access' });
       }
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
