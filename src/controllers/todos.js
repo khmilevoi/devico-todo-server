@@ -16,7 +16,7 @@ const todos = {
 
     const { id: owner } = ctx.tokenData;
 
-    if (verifyUser(owner, listId)) {
+    if (await verifyUser(owner, listId)) {
       const res = await TodoModel.create({ inner, list: listId });
 
       ctx.resolve();
@@ -29,11 +29,14 @@ const todos = {
     }
   },
   toggle: async (ctx) => {
-    const { id, list: listId } = ctx.params;
+    const { id } = ctx.params;
+
+    const { body } = ctx.request;
+    const { list: listId } = body;
 
     const { id: owner } = ctx.tokenData;
 
-    if (verifyUser(owner, listId)) {
+    if (await verifyUser(owner, listId)) {
       const todo = await TodoModel.findById(id);
       await TodoModel.updateOne(todo, { completed: !todo.completed });
 
@@ -54,7 +57,7 @@ const todos = {
 
     const { id: owner } = ctx.tokenData;
 
-    if (verifyUser(owner, listId)) {
+    if (await verifyUser(owner, listId)) {
       await TodoModel.deleteOne({ _id: id });
 
       ctx.resolve();
@@ -67,14 +70,14 @@ const todos = {
     }
   },
   update: async (ctx) => {
-    const { id, list: listId } = ctx.params;
+    const { id } = ctx.params;
 
     const { body } = ctx.request;
-    const { inner } = body;
+    const { inner, list: listId } = body;
 
     const { id: owner } = ctx.tokenData;
 
-    if (verifyUser(owner, listId)) {
+    if (await verifyUser(owner, listId)) {
       const todo = await TodoModel.findById(id);
       await TodoModel.updateOne(todo, { inner });
 

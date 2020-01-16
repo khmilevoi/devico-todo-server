@@ -28,7 +28,9 @@ const lists = {
   },
   add: async (ctx) => {
     const { body } = ctx.request;
-    const { name, owner } = body;
+    const { name } = body;
+
+    const { id: owner } = ctx.tokenData;
 
     const list = await ListModel.create({ name });
     await RoleModel.create({ list: list._id, owner, type: 'creator' });
