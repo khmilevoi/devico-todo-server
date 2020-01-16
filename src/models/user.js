@@ -3,9 +3,8 @@ import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
 const UserSchema = new Schema({
-  login: { type: String },
-  password: { type: String },
-  token: { type: String },
+  login: { type: String, required: true },
+  password: { type: String, required: true },
 });
 
 const User = mongoose.model('User', UserSchema);

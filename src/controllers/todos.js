@@ -8,11 +8,13 @@ const todos = {
 
     const res = await TodoModel.find({ list });
 
-    ctx.resolve({ res });
+    ctx.resolve({ res, list });
   },
   add: async (ctx) => {
+    const { list: listId } = ctx.query;
+
     const { body } = ctx.request;
-    const { inner, list: listId } = body;
+    const { inner } = body;
 
     const { id: owner } = ctx.tokenData;
 
@@ -22,7 +24,7 @@ const todos = {
       ctx.resolve();
 
       emitAllOwners(owner, ({ socket }) => {
-        ctx.emit(socket, 'todos', { type: 'add', res });
+        ctx.emit(socket, 'todos', { type: 'add', res, list: listId });
       });
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
@@ -31,10 +33,9 @@ const todos = {
   toggle: async (ctx) => {
     const { id } = ctx.params;
 
-    const { body } = ctx.request;
-    const { list: listId } = body;
-
     const { id: owner } = ctx.tokenData;
+
+    const { list: listId } = await TodoModel.findById(id);
 
     if (await verifyUser(owner, listId)) {
       const todo = await TodoModel.findById(id);
@@ -52,10 +53,9 @@ const todos = {
   delete: async (ctx) => {
     const { id } = ctx.params;
 
-    const { body } = ctx.request;
-    const { list: listId } = body;
-
     const { id: owner } = ctx.tokenData;
+
+    const { list: listId } = await TodoModel.findById(id);
 
     if (await verifyUser(owner, listId)) {
       await TodoModel.deleteOne({ _id: id });
@@ -73,7 +73,9 @@ const todos = {
     const { id } = ctx.params;
 
     const { body } = ctx.request;
-    const { inner, list: listId } = body;
+    const { inner } = body;
+
+    const { list: listId } = await TodoModel.findById(id);
 
     const { id: owner } = ctx.tokenData;
 

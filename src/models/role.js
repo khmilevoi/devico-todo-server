@@ -3,9 +3,9 @@ import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
 const RoleSchema = new Schema({
-  owner: { type: String },
-  list: { type: String },
-  type: { type: String, enum: ['creator', 'guest'] },
+  owner: { type: String, required: true },
+  list: { type: String, required: true },
+  type: { type: String, enum: ['creator', 'guest'], required: true },
 });
 
 const Role = mongoose.model('Role', RoleSchema);

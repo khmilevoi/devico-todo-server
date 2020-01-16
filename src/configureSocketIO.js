@@ -17,24 +17,29 @@ export const getAllSockets = (user) => SocketModel.find({ user });
 
 export const clearAllSockets = () => SocketModel.deleteMany({});
 
-export const emitAllOwners = async (ownerId, callback) => {
+export const emitAllOwners = async (ownerId, callback, excludes = []) => {
   const roles = await RoleModel.find({ owner: ownerId });
 
-  roles.forEach(async ({ owner }) => {
-    const sockets = await getAllSockets(owner);
-
-    sockets.forEach((socket) => callback(socket, owner));
+  const sockets = await SocketModel.find({
+    user: {
+      $in: roles
+        .map(({ owner }) => owner)
+        .filter((owner) => !excludes.includes(owner)),
+    },
   });
+
+  sockets.forEach((socket) => callback(socket));
 };
 
 export const verifyUser = async (owner, listId) => {
-  const role = await RoleModel.find({ owner, list: listId });
+  const role = await RoleModel.findOne({ owner, list: listId });
 
-  if (role && role.type === 'creator') {
-    return true;
-  }
   if (!role) {
     return false;
+  }
+
+  if (role.type === 'creator') {
+    return true;
   }
 
   const list = await ListModel.findById(listId);

@@ -1,5 +1,6 @@
 import RoleModel from '../models/role';
 import ListModel from '../models/list';
+import TodoModel from '../models/todo';
 
 import { emitAllOwners, getAllSockets } from '../configureSocketIO';
 
@@ -34,15 +35,18 @@ const lists = {
 
     const { id: owner } = ctx.tokenData;
 
-    const list = await ListModel.create({ name });
-    await RoleModel.create({ list: list.id, owner, type: 'creator' });
+    const res = await ListModel.create({ name, creator: owner });
+    await RoleModel.create({ list: res.id, owner, type: 'creator' });
 
     ctx.resolve();
 
     const sockets = await getAllSockets(owner);
 
     sockets.forEach(({ socket }) => {
-      ctx.emit(socket, 'lists', { type: 'add', list });
+      ctx.emit(socket, 'lists', {
+        type: 'add',
+        res,
+      });
     });
   },
   delete: async (ctx) => {
@@ -52,15 +56,23 @@ const lists = {
 
     const role = await RoleModel.findOne({ owner, list: id });
 
+    // debugger;
+
     if (role && role.type === 'creator') {
-      await RoleModel.deleteMany({ list: id });
-      await ListModel.deleteOne({ id });
+      await ListModel.deleteOne({ _id: id });
+      await TodoModel.deleteMany({ list: id });
 
       ctx.resolve();
 
-      await emitAllOwners(id, ({ socket }) => {
-        ctx.emit(socket, 'lists', { type: 'delete', id });
+      await emitAllOwners(owner, ({ socket, user }) => {
+        ctx.emit(socket, 'lists', {
+          type: 'delete',
+          id,
+          listType: user === owner ? 'personal' : 'shared',
+        });
       });
+
+      await RoleModel.deleteMany({ list: id });
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
     }
@@ -78,8 +90,12 @@ const lists = {
 
       ctx.resolve();
 
-      emitAllOwners(id, ({ socket }) => {
-        ctx.emit(socket, 'lists', { type: 'toggle', public: !list.public });
+      emitAllOwners(owner, ({ socket, user }) => {
+        ctx.emit(socket, 'lists', {
+          type: 'toggle',
+          id,
+          listType: user === owner ? 'personal' : 'shared',
+        });
       });
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
@@ -101,15 +117,19 @@ const lists = {
 
         ctx.resolve();
 
-        const list = await ListModel.findById(id);
+        const res = await ListModel.findById(id);
 
-        emitAllOwners(id, ({ socket }) => {
-          ctx.emit(socket, 'lists', { type: 'share', list });
+        emitAllOwners(id, ({ socket, user }) => {
+          ctx.emit(socket, 'lists', {
+            type: 'share',
+            res,
+            listType: user === owner ? 'personal' : 'shared',
+          });
         });
 
         ctx.resolve();
       } else {
-        // ctx.badRequest({ message: 'You don`t have access' });
+        ctx.badRequest({ message: 'Role exist' });
       }
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
