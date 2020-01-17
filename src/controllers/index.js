@@ -1,8 +1,17 @@
 import Router from 'koa-router';
 
+import usersRouter from './users';
 import listController from './lists';
 import todosController from './todos';
 import authController from './auth';
+
+const configureUsersRouter = () => {
+  const router = new Router({ prefix: '/users' });
+
+  router.get('/', usersRouter.get);
+
+  return router.routes();
+};
 
 const configureListRouter = () => {
   const router = new Router({ prefix: '/lists' });
@@ -40,6 +49,7 @@ const configureAuthRouter = () => {
 export const configureRouter = () => {
   const router = new Router();
 
+  router.use(configureUsersRouter());
   router.use(configureListRouter());
   router.use(configureTodosRouter());
   router.use(configureAuthRouter());

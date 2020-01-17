@@ -17,8 +17,8 @@ export const getAllSockets = (user) => SocketModel.find({ user });
 
 export const clearAllSockets = () => SocketModel.deleteMany({});
 
-export const emitAllOwners = async (ownerId, callback, excludes = []) => {
-  const roles = await RoleModel.find({ owner: ownerId });
+export const emitAllOwners = async (listId, callback, excludes = []) => {
+  const roles = await RoleModel.find({ list: listId });
 
   const sockets = await SocketModel.find({
     user: {

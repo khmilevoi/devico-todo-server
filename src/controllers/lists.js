@@ -50,50 +50,48 @@ const lists = {
     });
   },
   delete: async (ctx) => {
-    const { id } = ctx.params;
+    const { id: listId } = ctx.params;
 
     const { id: owner } = ctx.tokenData;
 
-    const role = await RoleModel.findOne({ owner, list: id });
-
-    // debugger;
+    const role = await RoleModel.findOne({ owner, list: listId });
 
     if (role && role.type === 'creator') {
-      await ListModel.deleteOne({ _id: id });
-      await TodoModel.deleteMany({ list: id });
+      await ListModel.deleteOne({ _id: listId });
+      await TodoModel.deleteMany({ list: listId });
 
       ctx.resolve();
 
-      await emitAllOwners(owner, ({ socket, user }) => {
+      await emitAllOwners(listId, ({ socket, user }) => {
         ctx.emit(socket, 'lists', {
           type: 'delete',
-          id,
+          id: listId,
           listType: user === owner ? 'personal' : 'shared',
         });
       });
 
-      await RoleModel.deleteMany({ list: id });
+      await RoleModel.deleteMany({ list: listId });
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
     }
   },
   toggle: async (ctx) => {
-    const { id } = ctx.params;
+    const { id: listId } = ctx.params;
 
     const { id: owner } = ctx.tokenData;
 
-    const role = await RoleModel.findOne({ owner, list: id });
+    const role = await RoleModel.findOne({ owner, list: listId });
 
     if (role && role.type === 'creator') {
-      const list = await ListModel.findById(id);
+      const list = await ListModel.findById(listId);
       await ListModel.updateMany(list, { public: !list.public });
 
       ctx.resolve();
 
-      emitAllOwners(owner, ({ socket, user }) => {
+      emitAllOwners(listId, ({ socket, user }) => {
         ctx.emit(socket, 'lists', {
           type: 'toggle',
-          id,
+          id: listId,
           listType: user === owner ? 'personal' : 'shared',
         });
       });
@@ -102,24 +100,24 @@ const lists = {
     }
   },
   share: async (ctx) => {
-    const { id } = ctx.params;
+    const { id: listId } = ctx.params;
 
     const { body } = ctx.request;
-    const { owner: newOwner } = body;
+    const { newOwner } = body;
 
     const { id: owner } = ctx.tokenData;
 
-    const role = await RoleModel.findOne({ owner, list: id });
+    const role = await RoleModel.findOne({ owner, list: listId });
 
     if (role && role.type === 'creator') {
-      if (!(await RoleModel.exists({ list: id, owner: newOwner }))) {
-        await RoleModel.create({ list: id, owner: newOwner, type: 'guest' });
+      if (!(await RoleModel.exists({ list: listId, owner: newOwner }))) {
+        await RoleModel.create({ list: listId, owner: newOwner, type: 'guest' });
 
         ctx.resolve();
 
-        const res = await ListModel.findById(id);
+        const res = await ListModel.findById(listId);
 
-        emitAllOwners(id, ({ socket, user }) => {
+        emitAllOwners(listId, ({ socket, user }) => {
           ctx.emit(socket, 'lists', {
             type: 'share',
             res,

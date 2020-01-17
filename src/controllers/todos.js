@@ -23,7 +23,7 @@ const todos = {
 
       ctx.resolve();
 
-      emitAllOwners(owner, ({ socket }) => {
+      emitAllOwners(listId, ({ socket }) => {
         ctx.emit(socket, 'todos', { type: 'add', res, list: listId });
       });
     } else {
@@ -31,64 +31,64 @@ const todos = {
     }
   },
   toggle: async (ctx) => {
-    const { id } = ctx.params;
+    const { id: todoId } = ctx.params;
 
     const { id: owner } = ctx.tokenData;
 
-    const { list: listId } = await TodoModel.findById(id);
+    const { list: listId } = await TodoModel.findById(todoId);
 
     if (await verifyUser(owner, listId)) {
-      const todo = await TodoModel.findById(id);
+      const todo = await TodoModel.findById(todoId);
       await TodoModel.updateOne(todo, { completed: !todo.completed });
 
       ctx.resolve();
 
-      emitAllOwners(owner, ({ socket }) => {
-        ctx.emit(socket, 'todos', { type: 'toggle', id, list: listId });
+      emitAllOwners(listId, ({ socket }) => {
+        ctx.emit(socket, 'todos', { type: 'toggle', id: todoId, list: listId });
       });
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
     }
   },
   delete: async (ctx) => {
-    const { id } = ctx.params;
+    const { id: todoId } = ctx.params;
 
     const { id: owner } = ctx.tokenData;
 
-    const { list: listId } = await TodoModel.findById(id);
+    const { list: listId } = await TodoModel.findById(todoId);
 
     if (await verifyUser(owner, listId)) {
-      await TodoModel.deleteOne({ _id: id });
+      await TodoModel.deleteOne({ _id: todoId });
 
       ctx.resolve();
 
-      emitAllOwners(owner, ({ socket }) => {
-        ctx.emit(socket, 'todos', { type: 'delete', id, list: listId });
+      emitAllOwners(listId, ({ socket }) => {
+        ctx.emit(socket, 'todos', { type: 'delete', id: todoId, list: listId });
       });
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
     }
   },
   update: async (ctx) => {
-    const { id } = ctx.params;
+    const { id: todoId } = ctx.params;
 
     const { body } = ctx.request;
     const { inner } = body;
 
-    const { list: listId } = await TodoModel.findById(id);
+    const { list: listId } = await TodoModel.findById(todoId);
 
     const { id: owner } = ctx.tokenData;
 
     if (await verifyUser(owner, listId)) {
-      const todo = await TodoModel.findById(id);
+      const todo = await TodoModel.findById(todoId);
       await TodoModel.updateOne(todo, { inner });
 
       ctx.resolve();
 
-      emitAllOwners(owner, ({ socket }) => {
+      emitAllOwners(listId, ({ socket }) => {
         ctx.emit(socket, 'todos', {
           type: 'update',
-          id,
+          id: todoId,
           inner,
           list: listId,
         });
