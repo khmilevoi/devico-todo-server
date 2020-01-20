@@ -62,7 +62,7 @@ const lists = {
 
       ctx.resolve();
 
-      await emitAllOwners(listId, ({ socket, user }) => {
+      emitAllOwners(listId, ({ socket, user }) => {
         ctx.emit(socket, 'lists', {
           type: 'delete',
           id: listId,
@@ -111,7 +111,11 @@ const lists = {
 
     if (role && role.type === 'creator') {
       if (!(await RoleModel.exists({ list: listId, owner: newOwner }))) {
-        await RoleModel.create({ list: listId, owner: newOwner, type: 'guest' });
+        await RoleModel.create({
+          list: listId,
+          owner: newOwner,
+          type: 'guest',
+        });
 
         ctx.resolve();
 

@@ -6,6 +6,7 @@ export const configureMongo = () => {
   mongoose.connect(connString, {
     useUnifiedTopology: true,
     useNewUrlParser: true,
+    useFindAndModify: false,
   });
 
   const db = mongoose.connection;

@@ -32,7 +32,24 @@ const configureTodosRouter = () => {
   router.post('/', todosController.add);
   router.put('/:id', todosController.toggle);
   router.delete('/:id', todosController.delete);
-  router.patch('/:id', todosController.update);
+  router.patch('/:id', (ctx, next) => {
+    const { body } = ctx.request;
+    const { type } = body;
+
+    switch (type) {
+      case 'update': {
+        return todosController.update(ctx);
+      }
+
+      case 'move': {
+        return todosController.move(ctx);
+      }
+
+      default: {
+        return next();
+      }
+    }
+  });
 
   return router.routes();
 };
