@@ -8,8 +8,14 @@ const todos = {
     const { list } = ctx.query;
 
     const res = await TodoModel.find({ list });
+    const { head, tail } = await ListModel.findById(list);
 
-    ctx.resolve({ res, list });
+    ctx.resolve({
+      res,
+      list,
+      head,
+      tail,
+    });
   },
   add: async (ctx) => {
     const { list: listId } = ctx.query;
