@@ -45,7 +45,9 @@ export class Target {
 
         this.called[event] = [false, null];
       } else {
-        this.add(event, resolve);
+        this.add(event, (...args) => {
+          resolve(...args);
+        });
       }
     });
   }

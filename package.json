@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "jest --detectOpenHandles --testPathIgnorePatterns='_utils.*'",
+    "test-debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
     "build": "webpack",
     "watch": "webpack --watch",
     "start": "nodemon --inspect dist/main.bundle.js"

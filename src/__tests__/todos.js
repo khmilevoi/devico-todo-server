@@ -76,7 +76,7 @@ describe('Todos test', () => {
     await clear();
   });
 
-  it('get', async () => {
+  it('get todos successfully', async () => {
     const auth = await request(app.callback())
       .post('/auth/')
       .send({ login: 'Lol', password: '123456' });
@@ -114,7 +114,38 @@ describe('Todos test', () => {
     expect(todo.list).toBe(list.res._id);
   });
 
-  it('add', async () => {
+  it('get not own todos should failed', async () => {
+    const auth = await request(app.callback())
+      .post('/auth/')
+      .send({ login: 'Lol', password: '123456' });
+
+    const auth2 = await request(app.callback())
+      .post('/auth/')
+      .send({ login: 'Lol2', password: '123456' });
+
+    clientSocket.on('lists', (message) => {
+      target.dispatch('get test', message);
+    });
+
+    clientSocket.emit('auth', auth.body.token);
+
+    await request(app.callback())
+      .post('/lists/')
+      .send({ name: 'addTest' })
+      .set('Authorization', `Bearer ${auth.body.token}`);
+
+    const list = await target.wait('get test');
+
+    await TodoModel.create({ inner: 'trash', list: list.res._id });
+
+    const response = await request(app.callback())
+      .get(`/todos?list=${list.res._id}`)
+      .set('Authorization', `Bearer ${auth2.body.token}`);
+
+    expect(response.status).toBe(400);
+  });
+
+  it('add todo successfully', async () => {
     const auth = await request(app.callback())
       .post('/auth/')
       .send({ login: 'Lol', password: '123456' });
@@ -153,7 +184,37 @@ describe('Todos test', () => {
     expect(message.res._id).toBeDefined();
   });
 
-  it('toggle', async () => {
+  it('add to not own list should failed', async () => {
+    const auth = await request(app.callback())
+      .post('/auth/')
+      .send({ login: 'Lol', password: '123456' });
+
+    const auth2 = await request(app.callback())
+      .post('/auth/')
+      .send({ login: 'Lol2', password: '123456' });
+
+    clientSocket.on('lists', (message) => {
+      target.dispatch('add test failed', message);
+    });
+
+    clientSocket.emit('auth', auth.body.token);
+
+    await request(app.callback())
+      .post('/lists/')
+      .send({ name: 'addTest' })
+      .set('Authorization', `Bearer ${auth.body.token}`);
+
+    const list = await target.wait('add test failed');
+
+    const response = await request(app.callback())
+      .post(`/todos?list=${list.res._id}`)
+      .send({ inner: 'trash' })
+      .set('Authorization', `Bearer ${auth2.body.token}`);
+
+    expect(response.status).toBe(400);
+  });
+
+  it('toggle todo successfully', async () => {
     const auth = await request(app.callback())
       .post('/auth/')
       .send({ login: 'Lol', password: '123456' });
@@ -195,7 +256,47 @@ describe('Todos test', () => {
     expect(message.list).toBe(list.res._id);
   });
 
-  it('delete', async () => {
+  it('toggle not own todo should failed', async () => {
+    const auth = await request(app.callback())
+      .post('/auth/')
+      .send({ login: 'Lol', password: '123456' });
+
+    const auth2 = await request(app.callback())
+      .post('/auth/')
+      .send({ login: 'Lol2', password: '123456' });
+
+    clientSocket.on('lists', (message) => {
+      target.dispatch('toggle test failed', message);
+    });
+
+    clientSocket.on('todos', (message) => {
+      target.dispatch('toggle test failed', message);
+    });
+
+    clientSocket.emit('auth', auth.body.token);
+
+    await request(app.callback())
+      .post('/lists/')
+      .send({ name: 'addTest' })
+      .set('Authorization', `Bearer ${auth.body.token}`);
+
+    const list = await target.wait('toggle test failed');
+
+    await request(app.callback())
+      .post(`/todos?list=${list.res._id}`)
+      .send({ inner: 'trash' })
+      .set('Authorization', `Bearer ${auth.body.token}`);
+
+    const todo = await target.wait('toggle test failed');
+
+    const response = await request(app.callback())
+      .put(`/todos/${todo.res._id}`)
+      .set('Authorization', `Bearer ${auth2.body.token}`);
+
+    expect(response.status).toBe(400);
+  });
+
+  it('delete todo successfully', async () => {
     const auth = await request(app.callback())
       .post('/auth/')
       .send({ login: 'Lol', password: '123456' });
@@ -237,7 +338,47 @@ describe('Todos test', () => {
     expect(message.list).toBe(list.res._id);
   });
 
-  it('update', async () => {
+  it('delete not own todo should failed', async () => {
+    const auth = await request(app.callback())
+      .post('/auth/')
+      .send({ login: 'Lol', password: '123456' });
+
+    const auth2 = await request(app.callback())
+      .post('/auth/')
+      .send({ login: 'Lol2', password: '123456' });
+
+    clientSocket.on('lists', (message) => {
+      target.dispatch('delete test failed', message);
+    });
+
+    clientSocket.on('todos', (message) => {
+      target.dispatch('delete test failed', message);
+    });
+
+    clientSocket.emit('auth', auth.body.token);
+
+    await request(app.callback())
+      .post('/lists/')
+      .send({ name: 'addTest' })
+      .set('Authorization', `Bearer ${auth.body.token}`);
+
+    const list = await target.wait('delete test failed');
+
+    await request(app.callback())
+      .post(`/todos?list=${list.res._id}`)
+      .send({ inner: 'trash' })
+      .set('Authorization', `Bearer ${auth.body.token}`);
+
+    const todo = await target.wait('delete test failed');
+
+    const response = await request(app.callback())
+      .delete(`/todos/${todo.res._id}`)
+      .set('Authorization', `Bearer ${auth2.body.token}`);
+
+    expect(response.status).toBe(400);
+  });
+
+  it('update todo successfully', async () => {
     const auth = await request(app.callback())
       .post('/auth/')
       .send({ login: 'Lol', password: '123456' });
@@ -281,7 +422,48 @@ describe('Todos test', () => {
     expect(message.inner).toBe('trash2');
   });
 
-  it('move', async () => {
+  it('update not own todo should failed', async () => {
+    const auth = await request(app.callback())
+      .post('/auth/')
+      .send({ login: 'Lol', password: '123456' });
+
+    const auth2 = await request(app.callback())
+      .post('/auth/')
+      .send({ login: 'Lol2', password: '123456' });
+
+    clientSocket.on('lists', (message) => {
+      target.dispatch('update test failed', message);
+    });
+
+    clientSocket.on('todos', (message) => {
+      target.dispatch('update test failed', message);
+    });
+
+    clientSocket.emit('auth', auth.body.token);
+
+    await request(app.callback())
+      .post('/lists/')
+      .send({ name: 'addTest' })
+      .set('Authorization', `Bearer ${auth.body.token}`);
+
+    const list = await target.wait('update test failed');
+
+    await request(app.callback())
+      .post(`/todos?list=${list.res._id}`)
+      .send({ inner: 'trash' })
+      .set('Authorization', `Bearer ${auth.body.token}`);
+
+    const todo = await target.wait('update test failed');
+
+    const response = await request(app.callback())
+      .patch(`/todos/${todo.res._id}`)
+      .send({ type: 'update', inner: 'trash2' })
+      .set('Authorization', `Bearer ${auth2.body.token}`);
+
+    expect(response.status).toBe(400);
+  });
+
+  it('move todo successfully', async () => {
     const auth = await request(app.callback())
       .post('/auth/')
       .send({ login: 'Lol', password: '123456' });
@@ -330,5 +512,53 @@ describe('Todos test', () => {
     expect(message.id).toBeDefined();
     expect(message.list).toBe(list.res._id);
     expect(message.prev).toBe(prev.res._id);
+  });
+
+  it('move not own todo should failed', async () => {
+    const auth = await request(app.callback())
+      .post('/auth/')
+      .send({ login: 'Lol', password: '123456' });
+
+    const auth2 = await request(app.callback())
+      .post('/auth/')
+      .send({ login: 'Lol2', password: '123456' });
+
+    clientSocket.on('lists', (message) => {
+      target.dispatch('move test failed', message);
+    });
+
+    clientSocket.on('todos', (message) => {
+      target.dispatch('move test failed', message);
+    });
+
+    clientSocket.emit('auth', auth.body.token);
+
+    await request(app.callback())
+      .post('/lists/')
+      .send({ name: 'addTest' })
+      .set('Authorization', `Bearer ${auth.body.token}`);
+
+    const list = await target.wait('move test failed');
+
+    await request(app.callback())
+      .post(`/todos?list=${list.res._id}`)
+      .send({ inner: 'trash' })
+      .set('Authorization', `Bearer ${auth.body.token}`);
+
+    const todo = await target.wait('move test failed');
+
+    await request(app.callback())
+      .post(`/todos?list=${list.res._id}`)
+      .send({ inner: 'trash' })
+      .set('Authorization', `Bearer ${auth.body.token}`);
+
+    const prev = await target.wait('move test failed');
+
+    const response = await request(app.callback())
+      .patch(`/todos/${todo.res._id}`)
+      .send({ type: 'move', prev: prev.res._id })
+      .set('Authorization', `Bearer ${auth2.body.token}`);
+
+    expect(response.status).toBe(400);
   });
 });
