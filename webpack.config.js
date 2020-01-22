@@ -11,6 +11,14 @@ module.exports = {
     filename: '[name].bundle.js',
     path: path.resolve(__dirname, 'dist'),
   },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: ['/__tests__/**.*'],
+      },
+    ],
+  },
   target: 'node',
   plugins: [new CleanWebpackPlugin()],
   externals: [nodeExternals()],
