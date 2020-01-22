@@ -33,7 +33,7 @@ describe('Auth test', () => {
     process.env = {
       SECRET: 'jwt_secret',
       SALT: '$2b$10$haQuUNZyq4zsqxJc3ezege',
-      PORT: '3000',
+      PORT: '3001',
     };
 
     io = configureSocketIO();
