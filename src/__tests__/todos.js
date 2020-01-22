@@ -76,7 +76,11 @@ describe('Todos test', () => {
     await clear();
   });
 
+<<<<<<< HEAD
   it('get todos successfully', async () => {
+=======
+  it('get', async () => {
+>>>>>>> aee031517e6e2f290679a056cb7e9df943c4e112
     const auth = await request(app.callback())
       .post('/auth/')
       .send({ login: 'Lol', password: '123456' });
@@ -114,6 +118,7 @@ describe('Todos test', () => {
     expect(todo.list).toBe(list.res._id);
   });
 
+<<<<<<< HEAD
   it('get not own todos should failed', async () => {
     const auth = await request(app.callback())
       .post('/auth/')
@@ -146,6 +151,9 @@ describe('Todos test', () => {
   });
 
   it('add todo successfully', async () => {
+=======
+  it('add', async () => {
+>>>>>>> aee031517e6e2f290679a056cb7e9df943c4e112
     const auth = await request(app.callback())
       .post('/auth/')
       .send({ login: 'Lol', password: '123456' });
@@ -184,6 +192,7 @@ describe('Todos test', () => {
     expect(message.res._id).toBeDefined();
   });
 
+<<<<<<< HEAD
   it('add to not own list should failed', async () => {
     const auth = await request(app.callback())
       .post('/auth/')
@@ -215,6 +224,9 @@ describe('Todos test', () => {
   });
 
   it('toggle todo successfully', async () => {
+=======
+  it('toggle', async () => {
+>>>>>>> aee031517e6e2f290679a056cb7e9df943c4e112
     const auth = await request(app.callback())
       .post('/auth/')
       .send({ login: 'Lol', password: '123456' });
@@ -256,6 +268,7 @@ describe('Todos test', () => {
     expect(message.list).toBe(list.res._id);
   });
 
+<<<<<<< HEAD
   it('toggle not own todo should failed', async () => {
     const auth = await request(app.callback())
       .post('/auth/')
@@ -297,6 +310,9 @@ describe('Todos test', () => {
   });
 
   it('delete todo successfully', async () => {
+=======
+  it('delete', async () => {
+>>>>>>> aee031517e6e2f290679a056cb7e9df943c4e112
     const auth = await request(app.callback())
       .post('/auth/')
       .send({ login: 'Lol', password: '123456' });
@@ -338,6 +354,7 @@ describe('Todos test', () => {
     expect(message.list).toBe(list.res._id);
   });
 
+<<<<<<< HEAD
   it('delete not own todo should failed', async () => {
     const auth = await request(app.callback())
       .post('/auth/')
@@ -379,6 +396,9 @@ describe('Todos test', () => {
   });
 
   it('update todo successfully', async () => {
+=======
+  it('update', async () => {
+>>>>>>> aee031517e6e2f290679a056cb7e9df943c4e112
     const auth = await request(app.callback())
       .post('/auth/')
       .send({ login: 'Lol', password: '123456' });
@@ -422,6 +442,7 @@ describe('Todos test', () => {
     expect(message.inner).toBe('trash2');
   });
 
+<<<<<<< HEAD
   it('update not own todo should failed', async () => {
     const auth = await request(app.callback())
       .post('/auth/')
@@ -464,6 +485,9 @@ describe('Todos test', () => {
   });
 
   it('move todo successfully', async () => {
+=======
+  it('move', async () => {
+>>>>>>> aee031517e6e2f290679a056cb7e9df943c4e112
     const auth = await request(app.callback())
       .post('/auth/')
       .send({ login: 'Lol', password: '123456' });
@@ -513,6 +537,7 @@ describe('Todos test', () => {
     expect(message.list).toBe(list.res._id);
     expect(message.prev).toBe(prev.res._id);
   });
+<<<<<<< HEAD
 
   it('move not own todo should failed', async () => {
     const auth = await request(app.callback())
@@ -561,4 +586,6 @@ describe('Todos test', () => {
 
     expect(response.status).toBe(400);
   });
+=======
+>>>>>>> aee031517e6e2f290679a056cb7e9df943c4e112
 });
