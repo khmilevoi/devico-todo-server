@@ -124,7 +124,7 @@ describe('Todos test', () => {
       .send({ login: 'Lol2', password: '123456' });
 
     clientSocket.on('lists', (message) => {
-      target.dispatch('get test', message);
+      target.dispatch('get test failed', message);
     });
 
     clientSocket.emit('auth', auth.body.token);
@@ -134,7 +134,7 @@ describe('Todos test', () => {
       .send({ name: 'addTest' })
       .set('Authorization', `Bearer ${auth.body.token}`);
 
-    const list = await target.wait('get test');
+    const list = await target.wait('get test failed');
 
     await TodoModel.create({ inner: 'trash', list: list.res._id });
 
