@@ -85,7 +85,10 @@ const todos = {
       await TodoModel.deleteOne({ _id: todoId });
 
       if (!next) {
-        await ListModel.updateOne({ _id: listId }, { tail: prev._id });
+        await ListModel.updateOne(
+          { _id: listId },
+          { tail: prev ? prev._id : null },
+        );
       }
 
       const currentList = await ListModel.findById(listId);
