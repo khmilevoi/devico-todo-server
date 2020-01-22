@@ -32,7 +32,6 @@ export const emitAllOwners = async (listId, callback, excludes = []) => {
 };
 
 export const verifyUser = async (owner, listId, easy) => {
-  debugger;
   const role = await RoleModel.findOne({ owner, list: listId });
 
   if (!role) {
