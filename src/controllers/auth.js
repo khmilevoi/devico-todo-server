@@ -4,8 +4,8 @@ import bcrypt from 'bcrypt';
 import UserModel from '../models/user';
 
 const getUserByLogin = (login) => UserModel.findOne({ login });
-const encrypt = (data) => bcrypt.hash(data, process.env.SALT);
 
+export const encrypt = (data, salt = process.env.SALT) => bcrypt.hash(data, salt);
 const createToken = (login, id) => jsonwebtoken.sign(
   { data: { login, id }, exp: Date.now() / 1000 + 60 * 60 },
   process.env.SECRET,
@@ -30,7 +30,10 @@ const auth = {
     if (!user) {
       const encryptedPassword = await encrypt(password);
 
-      const { _id } = UserModel.create({ login, password: encryptedPassword });
+      const { _id } = await UserModel.create({
+        login,
+        password: encryptedPassword,
+      });
 
       const token = createToken(login, _id);
       return ctx.resolve({ token, login, _id });

@@ -43,12 +43,12 @@ export const configureKoa = (io) => {
     return next();
   });
 
-  app.use((ctx, next) => {
-    console.log('BODY: ', ctx.request.body);
-    console.log('REQUEST: ', ctx.request);
+  // app.use((ctx, next) => {
+  //   console.log('BODY: ', ctx.request.body);
+  //   console.log('REQUEST: ', ctx.request);
 
-    return next();
-  });
+  //   return next();
+  // });
 
   app.use(...configureRouter());
 
