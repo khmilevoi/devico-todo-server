@@ -7,15 +7,21 @@ const todos = {
   get: async (ctx) => {
     const { list } = ctx.query;
 
-    const res = await TodoModel.find({ list });
-    const { head, tail } = await ListModel.findById(list);
+    const { id: owner } = ctx.tokenData;
 
-    ctx.resolve({
-      res,
-      list,
-      head,
-      tail,
-    });
+    if (await verifyUser(owner, list, true)) {
+      const res = await TodoModel.find({ list });
+      const { head, tail } = await ListModel.findById(list);
+
+      ctx.resolve({
+        res,
+        list,
+        head,
+        tail,
+      });
+    } else {
+      ctx.badRequest({ message: 'You don`t have access' });
+    }
   },
   add: async (ctx) => {
     const { list: listId } = ctx.query;

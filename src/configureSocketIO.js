@@ -31,7 +31,8 @@ export const emitAllOwners = async (listId, callback, excludes = []) => {
   sockets.forEach((socket) => callback(socket));
 };
 
-export const verifyUser = async (owner, listId) => {
+export const verifyUser = async (owner, listId, easy) => {
+  debugger;
   const role = await RoleModel.findOne({ owner, list: listId });
 
   if (!role) {
@@ -39,6 +40,10 @@ export const verifyUser = async (owner, listId) => {
   }
 
   if (role.type === 'creator') {
+    return true;
+  }
+
+  if (easy) {
     return true;
   }
 
