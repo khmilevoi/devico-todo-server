@@ -1,4 +1,4 @@
-export const dbGenerator = (connection) => {
+export const tableGenerator = (connection) => {
   const item = (str) => `${str} `;
 
   return (name, columns) => {

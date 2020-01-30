@@ -1,12 +1,12 @@
 import { Sequelize } from 'sequelize';
-import { dbGenerator } from './dbGenerator/dbGenerator';
+import { tableGenerator } from './tableGenerator/tableGenerator';
 
 export const sequelize = new Sequelize('todo', 'root', '', {
   host: 'localhost',
   dialect: 'mysql',
 });
 
-export const createTable = dbGenerator(sequelize);
+export const createTable = tableGenerator(sequelize);
 
 sequelize
   .authenticate()
