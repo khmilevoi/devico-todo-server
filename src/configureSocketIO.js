@@ -82,9 +82,9 @@ export const configureSocketIO = () => {
 
     socket.on('auth', async (token) => await addSocket(token, socket.id));
 
-    socket.on('exit', async () => await deleteSocket(socket.id));
+    // socket.on('exit', async () => await deleteSocket(socket.id));
 
-    socket.on('disconnect', async () => await deleteSocket(socket.id));
+    // socket.on('disconnect', async () => await deleteSocket(socket.id));
   });
 
   return io;

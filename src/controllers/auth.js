@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 
 import UserModel from '../models/user';
 
-const getUserByLogin = (login) => UserModel.findOne({ login });
+const getUserByLogin = (login) => UserModel.findOne({ where: { login } });
 
 export const encrypt = (data, salt = process.env.SALT) => bcrypt.hash(data, salt);
 const createToken = (login, id) => jsonwebtoken.sign(
@@ -52,6 +52,8 @@ const auth = {
     }
 
     const user = await getUserByLogin(login);
+
+    debugger;
 
     if (!user) {
       return ctx.unauthorized({ message: 'Bad login' });
