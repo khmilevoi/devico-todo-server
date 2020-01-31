@@ -1,7 +1,7 @@
-import TodoModel from '../models/todo';
-import ListModel from '../models/list';
-
 import { emitAllOwners, verifyUser } from '../configureSocketIO';
+
+import { TodoModel } from '../models/todo';
+import { ListModel } from '../models/list';
 
 const todos = {
   get: async (ctx) => {

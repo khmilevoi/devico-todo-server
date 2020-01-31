@@ -9,13 +9,24 @@ export const TodoModel = {
     references: 'lists',
     referenceKey: 'id',
   },
-  next: { type: DataTypes.INTEGER, references: 'todos', referenceKey: 'id' },
+  next: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: 'todos',
+    referenceKey: 'id',
+  },
   completed: { type: DataTypes.BOOLEAN, defaultValue: false },
+  createdAt: {
+    type: DataTypes.DATE,
+    field: 'created_at',
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    field: 'updated_at',
+  },
 };
 
-const Todo = sequelize.define('todo', TodoModel, {
+export const Todo = sequelize.define('todo', TodoModel, {
   freezeTableName: true,
   tableName: 'todos',
 });
-
-export default Todo;

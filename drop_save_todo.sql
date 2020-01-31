@@ -1,0 +1,2 @@
+DROP DATABASE `todo`;
+CREATE SCHEMA `todo` ;

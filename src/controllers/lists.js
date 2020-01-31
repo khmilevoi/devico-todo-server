@@ -1,8 +1,8 @@
-import RoleModel from '../models/role';
-import ListModel from '../models/list';
-import TodoModel from '../models/todo';
-
 import { emitAllOwners, getAllSockets } from '../configureSocketIO';
+
+import { Role } from '../models/role';
+import { List } from '../models/list';
+import { Todo } from '../models/todo';
 
 const lists = {
   get: async (ctx) => {
@@ -11,11 +11,13 @@ const lists = {
     const personal = [];
     const shared = [];
 
-    const roles = await RoleModel.find({ owner });
+    const roles = await Role.findAll({ owner });
 
     const lists = roles.map(({ list }) => list);
 
-    const listsInformation = await ListModel.find({ _id: { $in: lists } });
+    const listsInformation = await List.findAll({
+      where: { id: lists },
+    });
 
     roles.forEach(({ type, list: listId }) => {
       const list = listsInformation.find((item) => item.id === listId);
@@ -35,8 +37,9 @@ const lists = {
 
     const { id: owner } = ctx.tokenData;
 
-    const res = await ListModel.create({ name, creator: owner });
-    await RoleModel.create({ list: res.id, owner, type: 'creator' });
+    const res = await List.create({ name, creator: owner });
+
+    await Role.create({ list: res.id, owner, type: 'creator' });
 
     ctx.resolve();
 
@@ -54,23 +57,22 @@ const lists = {
 
     const { id: owner } = ctx.tokenData;
 
-    const role = await RoleModel.findOne({ owner, list: listId });
+    const role = await Role.findOne({ where: { owner, list: listId } });
 
     if (role && role.type === 'creator') {
-      await ListModel.deleteOne({ _id: listId });
-      await TodoModel.deleteMany({ list: listId });
-
       ctx.resolve();
 
-      emitAllOwners(listId, ({ socket, user }) => {
+      await emitAllOwners(listId, ({ socket, user }) => {
         ctx.emit(socket, 'lists', {
           type: 'delete',
-          id: listId,
+          id: +listId,
           listType: user === owner ? 'personal' : 'shared',
         });
       });
 
-      await RoleModel.deleteMany({ list: listId });
+      await Role.destroy({ where: { list: listId } });
+      await List.destroy({ where: { id: listId } });
+      await Todo.destroy({ where: { list: listId } });
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
     }
@@ -80,18 +82,18 @@ const lists = {
 
     const { id: owner } = ctx.tokenData;
 
-    const role = await RoleModel.findOne({ owner, list: listId });
+    const role = await Role.findOne({ where: { owner, list: listId } });
 
     if (role && role.type === 'creator') {
-      const list = await ListModel.findById(listId);
-      await ListModel.updateMany(list, { public: !list.public });
+      const list = await List.findOne({ where: { id: listId } });
+      await List.update({ public: !list.public }, { where: { id: listId } });
 
       ctx.resolve();
 
       emitAllOwners(listId, ({ socket, user }) => {
         ctx.emit(socket, 'lists', {
           type: 'toggle',
-          id: listId,
+          id: +listId,
           listType: user === owner ? 'personal' : 'shared',
         });
       });
@@ -107,11 +109,11 @@ const lists = {
 
     const { id: owner } = ctx.tokenData;
 
-    const role = await RoleModel.findOne({ owner, list: listId });
+    const role = await Role.findOne({ where: { owner, list: listId } });
 
     if (role && role.type === 'creator') {
-      if (!(await RoleModel.exists({ list: listId, owner: newOwner }))) {
-        await RoleModel.create({
+      if (!(await Role.findOne({ where: { list: listId, owner: newOwner } }))) {
+        await Role.create({
           list: listId,
           owner: newOwner,
           type: 'guest',
@@ -119,7 +121,7 @@ const lists = {
 
         ctx.resolve();
 
-        const res = await ListModel.findById(listId);
+        const res = await List.findOne({ where: { id: listId } });
 
         emitAllOwners(listId, ({ socket, user }) => {
           ctx.emit(socket, 'lists', {

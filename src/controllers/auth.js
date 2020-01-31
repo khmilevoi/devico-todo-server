@@ -1,9 +1,9 @@
 import jsonwebtoken from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 
-import UserModel from '../models/user';
+import { User } from '../models/user';
 
-const getUserByLogin = (login) => UserModel.findOne({ where: { login } });
+const getUserByLogin = (login) => User.findOne({ where: { login } });
 
 export const encrypt = (data, salt = process.env.SALT) => bcrypt.hash(data, salt);
 const createToken = (login, id) => jsonwebtoken.sign(
@@ -30,13 +30,13 @@ const auth = {
     if (!user) {
       const encryptedPassword = await encrypt(password);
 
-      const { _id } = await UserModel.create({
+      const { id } = await User.create({
         login,
         password: encryptedPassword,
       });
 
-      const token = createToken(login, _id);
-      return ctx.resolve({ token, login, _id });
+      const token = createToken(login, id);
+      return ctx.resolve({ token, login, id });
     }
 
     return ctx.badRequest({ message: 'User exist' });
@@ -53,18 +53,16 @@ const auth = {
 
     const user = await getUserByLogin(login);
 
-    debugger;
-
     if (!user) {
-      return ctx.unauthorized({ message: 'Bad login' });
+      return ctx.unauthorized({ message: 'User don`t exist' });
     }
 
     const check = await bcrypt.compare(password, user.password);
 
     if (check) {
-      const token = createToken(user.login, user._id);
+      const token = createToken(user.login, user.id);
 
-      return ctx.resolve({ token, login, _id: user._id });
+      return ctx.resolve({ token, login, id: user.id });
     }
 
     return ctx.unauthorized({ message: 'Bad password' });

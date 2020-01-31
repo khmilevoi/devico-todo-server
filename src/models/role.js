@@ -17,11 +17,17 @@ export const RoleModel = {
     primaryKey: true,
   },
   type: { type: DataTypes.ENUM('creator', 'guest'), allowNull: false },
+  createdAt: {
+    type: DataTypes.DATE,
+    field: 'created_at',
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    field: 'updated_at',
+  },
 };
 
-const Role = sequelize.define('role', RoleModel, {
+export const Role = sequelize.define('role', RoleModel, {
   freezeTableName: true,
   tableName: 'roles',
 });
-
-export default Role;

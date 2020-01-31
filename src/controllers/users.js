@@ -1,4 +1,4 @@
-import UserModel from '../models/user';
+import { User } from '../models/user';
 
 const tanimoto = (a, b) => {
   const subTokenLength = 3;
@@ -37,7 +37,7 @@ const tanimoto = (a, b) => {
 const selectUsers = (login) => new Promise((resolve) => {
   const users = [];
 
-  const cursor = UserModel.find().cursor();
+  const cursor = User.find().cursor();
 
   cursor.on('data', (current) => {
     const user = current;

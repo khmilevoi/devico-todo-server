@@ -4,6 +4,7 @@ const types = {
   STRING: 'VARCHAR(255)',
   BOOLEAN: 'BOOLEAN',
   INTEGER: 'INT',
+  DATE: 'DATETIME',
 };
 
 const createType = (type) => {
@@ -35,8 +36,10 @@ export class TableGenerator {
     const primary = ['id'];
     const foreign = {};
 
-    Object.keys(columns).forEach((name, index, array) => {
-      const params = columns[name];
+    Object.keys(columns).forEach((fieldName, index, array) => {
+      const params = columns[fieldName];
+
+      const name = params.field || fieldName;
 
       query += item(name);
 
@@ -94,7 +97,9 @@ export class TableGenerator {
 
         this.connection
           .query(query)
-          .catch(() => console.log(`duplicate ${table}_${column}_${ref}_fs constraint`));
+          .catch(() => console.log(
+            `duplicate ${table}_${column}_${ref}_fs constraint in ${tableName}`,
+          ));
       }));
     });
   }

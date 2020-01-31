@@ -9,11 +9,17 @@ export const SocketModel = {
     referenceKey: 'id',
   },
   socket: { type: DataTypes.STRING, allowNull: false },
+  createdAt: {
+    type: DataTypes.DATE,
+    field: 'created_at',
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    field: 'updated_at',
+  },
 };
 
-const Socket = sequelize.define('socket', SocketModel, {
+export const Socket = sequelize.define('socket', SocketModel, {
   freezeTableName: true,
   tableName: 'sockets',
 });
-
-export default Socket;

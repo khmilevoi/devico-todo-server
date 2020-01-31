@@ -22,12 +22,10 @@ const app = configureKoa(io);
 const server = http.createServer(app.callback());
 io.listen(server);
 
-// configureMongo();
-
 server.listen(PORT).on('listening', async () => {
   console.log(`Connection open t ${PORT}`);
 
-  // await clearAllSockets();
+  await clearAllSockets();
 });
 
 tableGenerator.add('lists', ListModel);

@@ -1,9 +1,9 @@
 import socket from 'socket.io';
 import jsonwebtoken from 'jsonwebtoken';
 
-import SocketModel from './models/socket';
-import RoleModel from './models/role';
-import ListModel from './models/list';
+import { Socket } from './models/socket';
+import { Role } from './models/role';
+import { List } from './models/list';
 
 const logger = (socket) => {
   console.log('\x1b[32m%s\x1b[0m', `${socket.id} connected`);
@@ -13,16 +13,16 @@ const logger = (socket) => {
   });
 };
 
-export const getAllSockets = (user) => SocketModel.find({ user });
+export const getAllSockets = (user) => Socket.findAll({ where: { user } });
 
-export const clearAllSockets = () => SocketModel.deleteMany({});
+export const clearAllSockets = () => Socket.destroy({ where: {} });
 
 export const emitAllOwners = async (listId, callback, excludes = []) => {
-  const roles = await RoleModel.find({ list: listId });
+  const roles = await Role.findAll({ where: { list: listId } });
 
-  const sockets = await SocketModel.find({
-    user: {
-      $in: roles
+  const sockets = await Socket.findAll({
+    where: {
+      user: roles
         .map(({ owner }) => owner)
         .filter((owner) => !excludes.includes(owner)),
     },
@@ -32,7 +32,7 @@ export const emitAllOwners = async (listId, callback, excludes = []) => {
 };
 
 export const verifyUser = async (owner, listId, easy) => {
-  const role = await RoleModel.findOne({ owner, list: listId });
+  const role = await Role.findOne({ where: { owner, list: listId } });
 
   if (!role) {
     return false;
@@ -46,7 +46,7 @@ export const verifyUser = async (owner, listId, easy) => {
     return true;
   }
 
-  const list = await ListModel.findById(listId);
+  const list = await List.findOne({ where: { id: listId } });
 
   if (list && list.public === true) {
     return true;
@@ -62,17 +62,17 @@ export const addSocket = async (token, socket) => {
 
     const row = { user, socket };
 
-    const exist = await SocketModel.exists(row);
+    const exist = !!(await Socket.findOne({ where: row }));
 
     if (!exist) {
-      await SocketModel.create(row);
+      await Socket.create(row);
     }
   } catch (error) {
     console.log('jwt incorrect');
   }
 };
 
-export const deleteSocket = (socket) => SocketModel.deleteOne({ socket });
+export const deleteSocket = (socket) => Socket.destroy({ where: { socket } });
 
 export const configureSocketIO = () => {
   const io = socket({ origins: '*:*' });
@@ -82,9 +82,9 @@ export const configureSocketIO = () => {
 
     socket.on('auth', async (token) => await addSocket(token, socket.id));
 
-    // socket.on('exit', async () => await deleteSocket(socket.id));
+    socket.on('exit', async () => await deleteSocket(socket.id));
 
-    // socket.on('disconnect', async () => await deleteSocket(socket.id));
+    socket.on('disconnect', async () => await deleteSocket(socket.id));
   });
 
   return io;
