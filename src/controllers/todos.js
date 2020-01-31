@@ -1,7 +1,7 @@
 import { emitAllOwners, verifyUser } from '../configureSocketIO';
 
-import { TodoModel } from '../models/todo';
-import { ListModel } from '../models/list';
+import { Todo } from '../models/todo';
+import { List } from '../models/list';
 
 const todos = {
   get: async (ctx) => {
@@ -10,8 +10,8 @@ const todos = {
     const { id: owner } = ctx.tokenData;
 
     if (await verifyUser(owner, list, true)) {
-      const res = await TodoModel.find({ list });
-      const { head, tail } = await ListModel.findById(list);
+      const res = await Todo.findAll({ where: { list } });
+      const { head, tail } = await List.findOne({ where: { id: list } });
 
       ctx.resolve({
         res,
@@ -32,28 +32,23 @@ const todos = {
     const { id: owner } = ctx.tokenData;
 
     if (await verifyUser(owner, listId)) {
-      const res = await TodoModel.create({ inner, list: listId });
+      const res = await Todo.create({ text: inner, list: listId });
 
-      const { head, tail } = await ListModel.findById(listId);
-      await ListModel.updateOne(
-        { _id: listId },
-        {
-          tail: res._id,
-        },
-      );
+      const { head, tail } = await List.findOne({ where: { id: listId } });
+      await List.update({ tail: res.id }, { where: { id: listId } });
 
       if (!head) {
-        await ListModel.updateOne({ _id: listId }, { head: res._id });
+        await List.update({ head: res.id }, { where: { id: listId } });
       }
 
       if (tail) {
-        await TodoModel.updateOne({ _id: tail }, { next: res._id });
+        await Todo.update({ next: res.id }, { where: { id: tail } });
       }
 
       ctx.resolve();
 
       emitAllOwners(listId, ({ socket }) => {
-        ctx.emit(socket, 'todos', { type: 'add', res, list: listId });
+        ctx.emit(socket, 'todos', { type: 'add', res, list: +listId });
       });
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
@@ -64,16 +59,23 @@ const todos = {
 
     const { id: owner } = ctx.tokenData;
 
-    const { list: listId } = await TodoModel.findById(todoId);
+    const { list: listId } = await Todo.findOne({ where: { id: todoId } });
 
     if (await verifyUser(owner, listId)) {
-      const todo = await TodoModel.findById(todoId);
-      await TodoModel.updateOne(todo, { completed: !todo.completed });
+      const todo = await Todo.findOne({ where: { id: todoId } });
+      await Todo.update(
+        { completed: !todo.completed },
+        { where: { id: todo.id } },
+      );
 
       ctx.resolve();
 
       emitAllOwners(listId, ({ socket }) => {
-        ctx.emit(socket, 'todos', { type: 'toggle', id: todoId, list: listId });
+        ctx.emit(socket, 'todos', {
+          type: 'toggle',
+          id: +todoId,
+          list: +listId,
+        });
       });
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
@@ -84,29 +86,37 @@ const todos = {
 
     const { id: owner } = ctx.tokenData;
 
-    const { list: listId, next } = await TodoModel.findById(todoId);
+    const { list: listId, next } = await Todo.findOne({
+      where: { id: todoId },
+    });
 
     if (await verifyUser(owner, listId)) {
-      const prev = await TodoModel.findOneAndUpdate({ next: todoId }, { next });
-      await TodoModel.deleteOne({ _id: todoId });
+      const prev = await Todo.findOne({ where: { next: todoId } });
+      await Todo.update({ next }, { where: { next: todoId } });
 
       if (!next) {
-        await ListModel.updateOne(
-          { _id: listId },
-          { tail: prev ? prev._id : null },
+        await List.update(
+          { tail: prev ? prev.id : null },
+          { where: { id: listId } },
         );
       }
 
-      const currentList = await ListModel.findById(listId);
+      const currentList = await List.findOne({ where: { id: listId } });
 
-      if (currentList.head === todoId) {
-        await ListModel.updateOne({ _id: listId }, { head: next });
+      if (currentList.head === +todoId) {
+        await List.update({ head: next }, { where: { id: listId } });
       }
+
+      await Todo.destroy({ where: { id: todoId } });
 
       ctx.resolve();
 
       emitAllOwners(listId, ({ socket }) => {
-        ctx.emit(socket, 'todos', { type: 'delete', id: todoId, list: listId });
+        ctx.emit(socket, 'todos', {
+          type: 'delete',
+          id: +todoId,
+          list: +listId,
+        });
       });
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
@@ -118,21 +128,21 @@ const todos = {
     const { body } = ctx.request;
     const { inner } = body;
 
-    const { list: listId } = await TodoModel.findById(todoId);
+    const { list: listId } = await Todo.findOne({ where: { id: todoId } });
 
     const { id: owner } = ctx.tokenData;
 
     if (await verifyUser(owner, listId)) {
-      await TodoModel.findByIdAndUpdate(todoId, { inner });
+      await Todo.update({ text: inner }, { where: { id: todoId } });
 
       ctx.resolve();
 
       emitAllOwners(listId, ({ socket }) => {
         ctx.emit(socket, 'todos', {
           type: 'update',
-          id: todoId,
+          id: +todoId,
           inner,
-          list: listId,
+          list: +listId,
         });
       });
     } else {
@@ -145,47 +155,45 @@ const todos = {
     const { body } = ctx.request;
     const { prev: prevId } = body;
 
-    const current = await TodoModel.findById(todoId);
+    const current = await Todo.findOne({ where: { id: todoId } });
 
     const { id: owner } = ctx.tokenData;
 
     if (await verifyUser(owner, current.list)) {
-      const prevItem = await TodoModel.findOneAndUpdate(
-        { next: todoId },
-        { next: current.next },
-      );
+      const prevItem = await Todo.findOne({ where: { next: todoId } });
+      await Todo.update({ next: current.next }, { where: { next: todoId } });
 
-      const currentList = await ListModel.findById(current.list);
+      const currentList = await List.findOne({ where: { id: current.list } });
 
-      if (currentList.head === todoId) {
-        await ListModel.updateOne(
-          { _id: current.list },
+      if (currentList.head === +todoId) {
+        await List.update(
           { head: current.next },
+          { where: { id: current.list } },
         );
       }
 
       if (!current.next) {
-        await ListModel.updateOne(
-          { _id: current.list },
+        await List.update(
           { tail: prevItem._id },
+          { where: { id: current.list } },
         );
       }
 
       if (prevId) {
-        const prev = await TodoModel.findById(prevId);
+        const prev = await Todo.findOne({ where: { id: prevId } });
 
         if (!prev.next) {
-          await ListModel.updateOne({ _id: current.list }, { tail: todoId });
+          await List.update({ tail: todoId }, { where: { id: current.list } });
         }
 
-        await TodoModel.updateOne({ _id: todoId }, { next: prev.next });
-        await TodoModel.updateOne({ _id: prev._id }, { next: todoId });
+        await Todo.update({ next: prev.next }, { where: { id: todoId } });
+        await Todo.update({ next: todoId }, { where: { id: prev.id } });
       } else {
-        const { head } = await ListModel.findById(current.list);
+        const { head } = await List.findOne({ where: { id: current.list } });
 
-        await TodoModel.updateOne({ _id: todoId }, { next: head });
+        await Todo.update({ next: head }, { where: { id: todoId } });
 
-        await ListModel.updateOne({ _id: current.list }, { head: todoId });
+        await List.update({ head: todoId }, { where: { id: current.list } });
       }
 
       ctx.resolve();
@@ -193,9 +201,9 @@ const todos = {
       emitAllOwners(current.list, ({ socket }) => {
         ctx.emit(socket, 'todos', {
           type: 'move',
-          id: todoId,
-          prev: prevId,
-          list: current.list,
+          id: +todoId,
+          prev: +prevId,
+          list: +current.list,
         });
       });
     } else {
