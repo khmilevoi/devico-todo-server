@@ -1,21 +1,13 @@
-// import mongoose from 'mongoose';
-
-// const { Schema } = mongoose;
-
-// const SocketSchema = new Schema({
-//   user: { type: String, required: true },
-//   socket: { type: String, required: true },
-// });
-
-// const Socket = mongoose.model('Socket', SocketSchema);
-
-// export default Socket;
-
 import { DataTypes } from 'sequelize';
-import { sequelize } from '../configureDB';
+import { sequelize } from '../database/connection';
 
-const SocketModel = {
-  user: { type: DataTypes.STRING, allowNull: false },
+export const SocketModel = {
+  user: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: 'users',
+    referenceKey: 'id',
+  },
   socket: { type: DataTypes.STRING, allowNull: false },
 };
 

@@ -1,20 +1,49 @@
-export const tableGenerator = (connection) => {
-  const item = (str) => `${str} `;
+const item = (str) => ` ${str}`;
 
-  return (name, columns) => {
-    let query = `CREATE TABLE IF NOT EXISTS ${name} (`;
+const types = {
+  STRING: 'VARCHAR(255)',
+  BOOLEAN: 'BOOLEAN',
+  INTEGER: 'INT',
+};
 
-    query += `${name}_id INT AUTO_INCREMENT PRIMARY KEY,`;
+const createType = (type) => {
+  const typeCode = type.key;
+
+  if (typeCode === 'ENUM') {
+    const { values } = type;
+
+    const parsedValues = values.map((item) => `'${item}'`);
+
+    return `ENUM(${parsedValues.join(', ')})`;
+  }
+
+  return types[typeCode];
+};
+
+export class TableGenerator {
+  constructor(connection) {
+    this.connection = connection;
+
+    this.constraints = {};
+  }
+
+  add(tableName, columns) {
+    let query = `CREATE TABLE IF NOT EXISTS ${tableName} (\n`;
+
+    query += 'id INT AUTO_INCREMENT,';
+
+    const primary = ['id'];
+    const foreign = {};
 
     Object.keys(columns).forEach((name, index, array) => {
       const params = columns[name];
 
-      const type = params.type.toString();
-
-      console.log(params.type);
-
       query += item(name);
-      // query += item(type);
+
+      const typeObject = params.type;
+      const type = createType(typeObject);
+
+      query += item(type);
 
       if (!params.allowNull) {
         query += item('NOT NULL');
@@ -24,15 +53,59 @@ export const tableGenerator = (connection) => {
         query += item(`DEFAULT ${params.defaultValue}`);
       }
 
+      if (params.primaryKey) {
+        primary.push(name);
+      }
+
+      if (params.references && params.referenceKey) {
+        foreign[params.references] = foreign[params.references] || [];
+
+        foreign[params.references].push({
+          ref: params.referenceKey,
+          column: name,
+        });
+      }
+
       if (index !== array.length - 1) {
-        query += item(',');
+        query += ',\n';
       }
     });
 
-    query += ')  ENGINE=INNODB;';
+    if (primary.length) {
+      query += `, \n${TableGenerator.PRIMARY_KEY(primary)}`;
+    }
 
-    console.log(query);
+    query += '\n) ENGINE=INNODB;';
 
-    // return connection.query(query);
-  };
-};
+    this.constraints[tableName] = foreign;
+
+    return this.connection.query(query);
+  }
+
+  createReferences() {
+    Object.entries(this.constraints).forEach(([tableName, foreign]) => {
+      Object.entries(foreign).forEach(([table, items]) => items.forEach(({ column, ref }) => {
+        const query = TableGenerator.ALTER_TABLE_FK(
+          tableName,
+          column,
+          table,
+          ref,
+        );
+
+        this.connection
+          .query(query)
+          .catch(() => console.log(`duplicate ${table}_${column}_${ref}_fs constraint`));
+      }));
+    });
+  }
+
+  static ALTER_TABLE_FK(table, column, refTable, ref) {
+    return `ALTER TABLE ${table} ADD CONSTRAINT ${refTable}_${column}_${ref}_fk FOREIGN KEY (${column}) REFERENCES ${refTable}(${ref});`;
+  }
+
+  static PRIMARY_KEY(columns) {
+    return `CONSTRAINT ${columns.join('_')}_pk PRIMARY KEY (${columns.join(
+      ', ',
+    )})`;
+  }
+}

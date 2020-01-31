@@ -1,25 +1,15 @@
-// import mongoose from 'mongoose';
-
-// const { Schema } = mongoose;
-
-// const TodoSchema = new Schema({
-//   inner: { type: String, required: true },
-//   completed: { type: Boolean, default: false },
-//   list: { type: String, required: true },
-//   next: { type: String, default: null },
-// });
-
-// const Todo = mongoose.model('Todo', TodoSchema);
-
-// export default Todo;
-
 import { DataTypes } from 'sequelize';
-import { sequelize } from '../configureDB';
+import { sequelize } from '../database/connection';
 
-const TodoModel = {
-  inner: { type: DataTypes.STRING, allowNull: false },
-  list: { type: DataTypes.STRING, allowNull: false },
-  next: { type: DataTypes.STRING },
+export const TodoModel = {
+  text: { type: DataTypes.STRING, allowNull: false },
+  list: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: 'lists',
+    referenceKey: 'id',
+  },
+  next: { type: DataTypes.INTEGER, references: 'todos', referenceKey: 'id' },
   completed: { type: DataTypes.BOOLEAN, defaultValue: false },
 };
 

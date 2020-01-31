@@ -15,17 +15,20 @@
 // export default List;
 
 import { DataTypes } from 'sequelize';
-import { sequelize, createTable } from '../configureDB';
+import { sequelize } from '../database/connection';
 
-const ListModel = {
+export const ListModel = {
   name: { type: DataTypes.STRING, allowNull: false },
   public: { type: DataTypes.BOOLEAN, defaultValue: true },
-  creator: { type: DataTypes.STRING, allowNull: false },
-  head: { type: DataTypes.STRING },
-  tail: { type: DataTypes.STRING },
+  creator: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: 'users',
+    referenceKey: 'id',
+  },
+  head: { type: DataTypes.INTEGER, references: 'todos', referenceKey: 'id' },
+  tail: { type: DataTypes.INTEGER, references: 'todos', referenceKey: 'id' },
 };
-
-createTable('lists', ListModel);
 
 const List = sequelize.define('list', ListModel, {
   freezeTableName: true,

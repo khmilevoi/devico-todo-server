@@ -2,8 +2,14 @@ import dotenv from 'dotenv';
 import http from 'http';
 
 import { configureKoa } from './configureKoa';
-// import { configureMongo } from './configureMongo';
 import { configureSocketIO, clearAllSockets } from './configureSocketIO';
+import { tableGenerator } from './database/connection';
+
+import { UserModel } from './models/user';
+import { ListModel } from './models/list';
+import { SocketModel } from './models/socket';
+import { TodoModel } from './models/todo';
+import { RoleModel } from './models/role';
 
 dotenv.config();
 
@@ -23,3 +29,11 @@ server.listen(PORT).on('listening', async () => {
 
   // await clearAllSockets();
 });
+
+tableGenerator.add('lists', ListModel);
+tableGenerator.add('roles', RoleModel);
+tableGenerator.add('sockets', SocketModel);
+tableGenerator.add('todos', TodoModel);
+tableGenerator.add('users', UserModel);
+
+tableGenerator.createReferences();

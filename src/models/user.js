@@ -1,27 +1,10 @@
-// import mongoose from 'mongoose';
-
-// const { Schema } = mongoose;
-
-// const UserSchema = new Schema({
-//   login: { type: String, required: true },
-//   password: { type: String, required: true },
-// });
-
-// const User = mongoose.model('User', UserSchema);
-
-// export default User;
-
 import { DataTypes } from 'sequelize';
-import { sequelize, createTable } from '../configureDB';
+import { sequelize } from '../database/connection';
 
-const UserModel = {
+export const UserModel = {
   login: { type: DataTypes.STRING, allowNull: false },
   password: { type: DataTypes.STRING, allowNull: false },
 };
-
-console.log(UserModel);
-
-createTable('users', UserModel);
 
 const User = sequelize.define('user', UserModel, {
   freezeTableName: true,
