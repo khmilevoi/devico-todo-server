@@ -7,6 +7,7 @@ export const RoleModel = {
     allowNull: false,
     references: 'users',
     referenceKey: 'id',
+    foreignKey: 'users_owner_id_fk',
     primaryKey: true,
   },
   list: {
@@ -14,6 +15,7 @@ export const RoleModel = {
     allowNull: false,
     references: 'lists',
     referenceKey: 'id',
+    foreignKey: 'lists_list_id_fk',
     primaryKey: true,
   },
   type: { type: DataTypes.ENUM('creator', 'guest'), allowNull: false },

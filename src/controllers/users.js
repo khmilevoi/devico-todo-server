@@ -34,26 +34,45 @@ const tanimoto = (a, b) => {
   return [tanimoto, tanimoto >= thresholdWord];
 };
 
-const selectUsers = (login) => new Promise((resolve) => {
-  const users = [];
+// const selectUsers = (login) => new Promise((resolve) => {
+//   const users = [];
 
-  const cursor = User.find().cursor();
+//   const cursor = User.find().cursor();
 
-  cursor.on('data', (current) => {
+//   cursor.on('data', (current) => {
+//     const user = current;
+
+//     const currentLogin = user.login.toLowerCase();
+
+//     const [coefficient, match] = tanimoto(login, currentLogin);
+//     user._doc.coefficient = coefficient;
+
+//     if (currentLogin.includes(login) || match) {
+//       users.push(current);
+//     }
+//   });
+
+//   cursor.on('close', () => resolve(users));
+// });
+
+const selectUsers = async (login) => {
+  const users = await User.findAll();
+
+  return users.filter((current) => {
     const user = current;
 
     const currentLogin = user.login.toLowerCase();
 
     const [coefficient, match] = tanimoto(login, currentLogin);
-    user._doc.coefficient = coefficient;
+    user.setDataValue('coefficient', coefficient);
 
     if (currentLogin.includes(login) || match) {
-      users.push(current);
+      return true;
     }
-  });
 
-  cursor.on('close', () => resolve(users));
-});
+    return false;
+  });
+};
 
 const users = {
   get: async (ctx) => {

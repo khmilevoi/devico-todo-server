@@ -4,6 +4,7 @@ import jsonwebtoken from 'jsonwebtoken';
 import { Socket } from './models/socket';
 import { Role } from './models/role';
 import { List } from './models/list';
+import { sequelize } from './database/connection';
 
 const logger = (socket) => {
   console.log('\x1b[32m%s\x1b[0m', `${socket.id} connected`);
@@ -17,16 +18,16 @@ export const getAllSockets = (user) => Socket.findAll({ where: { user } });
 
 export const clearAllSockets = () => Socket.destroy({ where: {} });
 
-export const emitAllOwners = async (listId, callback, excludes = []) => {
-  const roles = await Role.findAll({ where: { list: listId } });
-
-  const sockets = await Socket.findAll({
-    where: {
-      user: roles
-        .map(({ owner }) => owner)
-        .filter((owner) => !excludes.includes(owner)),
-    },
-  });
+export const emitAllOwners = async (listId, callback) => {
+  const [sockets] = await sequelize.query(
+    `
+    select 
+      sockets.socket as socket,
+      sockets.user as user
+    from sockets, roles 
+    where roles.list = ${listId} and roles.owner = sockets.user;
+    `,
+  );
 
   sockets.forEach((socket) => callback(socket));
 };

@@ -3,6 +3,7 @@ import { emitAllOwners, getAllSockets } from '../configureSocketIO';
 import { Role } from '../models/role';
 import { List } from '../models/list';
 import { Todo } from '../models/todo';
+import { sequelize } from '../database/connection';
 
 const lists = {
   get: async (ctx) => {
@@ -11,17 +12,20 @@ const lists = {
     const personal = [];
     const shared = [];
 
-    const roles = await Role.findAll({ owner });
+    const [lists] = await sequelize.query(
+      `
+      select 
+        roles.type as type, 
+        lists.id as id, 
+        lists.name as name, 
+        lists.creator as creator, 
+        lists.public as public
+      from lists, roles 
+      where lists.id = roles.list and roles.owner = ${owner};
+      `,
+    );
 
-    const lists = roles.map(({ list }) => list);
-
-    const listsInformation = await List.findAll({
-      where: { id: lists },
-    });
-
-    roles.forEach(({ type, list: listId }) => {
-      const list = listsInformation.find((item) => item.id === listId);
-
+    lists.forEach(({ type, ...list }) => {
       if (type === 'creator') {
         personal.push(list);
       } else if (type === 'guest') {
@@ -82,15 +86,20 @@ const lists = {
 
     const { id: owner } = ctx.tokenData;
 
-    const role = await Role.findOne({ where: { owner, list: listId } });
+    const role = await Role.findOne({
+      where: { owner, list: listId },
+      include: [{ model: List, where: { id: listId }, as: 'lists' }],
+    });
 
     if (role && role.type === 'creator') {
-      const list = await List.findOne({ where: { id: listId } });
+      const list = role.lists;
       await List.update({ public: !list.public }, { where: { id: listId } });
 
       ctx.resolve();
 
       emitAllOwners(listId, ({ socket, user }) => {
+        // debugger;
+
         ctx.emit(socket, 'lists', {
           type: 'toggle',
           id: +listId,

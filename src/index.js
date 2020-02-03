@@ -11,6 +11,8 @@ import { SocketModel } from './models/socket';
 import { TodoModel } from './models/todo';
 import { RoleModel } from './models/role';
 
+import { createReferences } from './models/references';
+
 dotenv.config();
 
 const PORT = process.env.PORT || 3000;
@@ -27,6 +29,8 @@ server.listen(PORT).on('listening', async () => {
 
   await clearAllSockets();
 });
+
+createReferences();
 
 tableGenerator.add('lists', ListModel);
 tableGenerator.add('roles', RoleModel);
