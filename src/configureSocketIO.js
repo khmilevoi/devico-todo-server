@@ -4,7 +4,16 @@ import jsonwebtoken from 'jsonwebtoken';
 import { Socket } from './models/socket';
 import { Role } from './models/role';
 import { List } from './models/list';
+import { Token } from './models/token';
+
 import { sequelize } from './database/connection';
+
+import {
+  LIVE_REFRESH_TOKEN,
+  createRefreshToken,
+  createToken,
+  LIVE_SESSION_TOKEN,
+} from './utils/refresh';
 
 const logger = (socket) => {
   console.log('\x1b[32m%s\x1b[0m', `${socket.id} connected`);
@@ -59,17 +68,36 @@ export const verifyUser = async (owner, listId, easy) => {
 export const addSocket = async (token, socket) => {
   try {
     const { data } = jsonwebtoken.verify(token, process.env.SECRET);
-    const { id: user } = data;
+    const { id: userId, login } = data;
 
-    const row = { user, socket };
+    const row = { user: userId, socket: socket.id };
 
     const exist = !!(await Socket.findOne({ where: row }));
 
     if (!exist) {
       await Socket.create(row);
+
+      const refreshToken = createRefreshToken();
+
+      await Token.create({
+        user: userId,
+        token: refreshToken,
+        socket: socket.id,
+      });
+
+      setTimeout(async () => {
+        await Token.destroy({ where: { token: refreshToken } });
+      }, LIVE_REFRESH_TOKEN);
+
+      socket.emit('auth', {
+        refreshToken: {
+          token: refreshToken,
+          live: LIVE_REFRESH_TOKEN,
+        },
+      });
     }
   } catch (error) {
-    console.log('jwt incorrect');
+    console.log(error.message);
   }
 };
 
@@ -81,7 +109,7 @@ export const configureSocketIO = () => {
   io.on('connection', (socket) => {
     logger(socket);
 
-    socket.on('auth', async (token) => await addSocket(token, socket.id));
+    socket.on('auth', async (token) => await addSocket(token, socket));
 
     socket.on('exit', async () => await deleteSocket(socket.id));
 

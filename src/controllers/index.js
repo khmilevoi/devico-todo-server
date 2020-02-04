@@ -4,6 +4,7 @@ import usersRouter from './users';
 import listController from './lists';
 import todosController from './todos';
 import authController from './auth';
+import tokenController from './token';
 
 const configureUsersRouter = () => {
   const router = new Router({ prefix: '/users' });
@@ -63,13 +64,23 @@ const configureAuthRouter = () => {
   return router.routes();
 };
 
+const configureTokenRouter = () => {
+  const router = new Router({ prefix: '/token' });
+
+  router.post('/', tokenController.updateSession);
+  router.post('/refresh', tokenController.updateRefresh);
+
+  return router.routes();
+};
+
 export const configureRouter = () => {
   const router = new Router();
 
+  router.use(configureAuthRouter());
   router.use(configureUsersRouter());
   router.use(configureListRouter());
   router.use(configureTodosRouter());
-  router.use(configureAuthRouter());
+  router.use(configureTokenRouter());
 
   return [router.routes(), router.allowedMethods()];
 };

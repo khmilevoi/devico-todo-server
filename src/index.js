@@ -3,7 +3,7 @@ import http from 'http';
 
 import { configureKoa } from './configureKoa';
 import { configureSocketIO, clearAllSockets } from './configureSocketIO';
-import { tableGenerator } from './database/connection';
+import { tableGenerator, sequelize } from './database/connection';
 
 import { UserModel } from './models/user';
 import { ListModel } from './models/list';
@@ -12,6 +12,9 @@ import { TodoModel } from './models/todo';
 import { RoleModel } from './models/role';
 
 import { createReferences } from './models/references';
+import { TokenModel } from './models/token';
+
+import { LIVE_REFRESH_TOKEN } from './utils/refresh';
 
 dotenv.config();
 
@@ -28,6 +31,11 @@ server.listen(PORT).on('listening', async () => {
   console.log(`Connection open t ${PORT}`);
 
   await clearAllSockets();
+
+  await sequelize.query(
+    `DELETE FROM tokens WHERE updated_at < now() - interval ${LIVE_REFRESH_TOKEN
+      / 1000} second`,
+  );
 });
 
 createReferences();
@@ -37,5 +45,6 @@ tableGenerator.add('roles', RoleModel);
 tableGenerator.add('sockets', SocketModel);
 tableGenerator.add('todos', TodoModel);
 tableGenerator.add('users', UserModel);
+tableGenerator.add('tokens', TokenModel);
 
 tableGenerator.createReferences();

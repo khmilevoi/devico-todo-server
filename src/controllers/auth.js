@@ -1,18 +1,12 @@
-import jsonwebtoken from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 
 import { User } from '../models/user';
 
+import { createToken, LIVE_SESSION_TOKEN } from '../utils/refresh';
+
 const getUserByLogin = (login) => User.findOne({ where: { login } });
 
 export const encrypt = (data, salt = process.env.SALT) => bcrypt.hash(data, salt);
-const createToken = (login, id) => jsonwebtoken.sign(
-  { data: { login, id }, exp: Date.now() / 1000 + 60 * 60 },
-  process.env.SECRET,
-  {
-    algorithm: 'HS256',
-  },
-);
 
 const auth = {
   register: async (ctx) => {
@@ -36,7 +30,13 @@ const auth = {
       });
 
       const token = createToken(login, id);
-      return ctx.resolve({ token, login, id });
+
+      return ctx.resolve({
+        token,
+        login,
+        id,
+        live: LIVE_SESSION_TOKEN,
+      });
     }
 
     return ctx.badRequest({ message: 'User exist' });
@@ -62,7 +62,12 @@ const auth = {
     if (check) {
       const token = createToken(user.login, user.id);
 
-      return ctx.resolve({ token, login, id: user.id });
+      return ctx.resolve({
+        token,
+        login,
+        id: user.id,
+        live: LIVE_SESSION_TOKEN,
+      });
     }
 
     return ctx.unauthorized({ message: 'Bad password' });

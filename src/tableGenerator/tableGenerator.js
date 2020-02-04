@@ -98,14 +98,14 @@ export class TableGenerator {
         this.connection
           .query(query)
           .catch(() => console.log(
-            `duplicate ${table}_${column}_${ref}_fs constraint in ${tableName}`,
+            `duplicate ${tableName}_${table}_${column}_${ref}_fs constraint in ${tableName}`,
           ));
       }));
     });
   }
 
   static ALTER_TABLE_FK(table, column, refTable, ref) {
-    return `ALTER TABLE ${table} ADD CONSTRAINT ${refTable}_${column}_${ref}_fk FOREIGN KEY (${column}) REFERENCES ${refTable}(${ref});`;
+    return `ALTER TABLE ${table} ADD CONSTRAINT ${table}_${refTable}_${column}_${ref}_fk FOREIGN KEY (${column}) REFERENCES ${refTable}(${ref});`;
   }
 
   static PRIMARY_KEY(columns) {
