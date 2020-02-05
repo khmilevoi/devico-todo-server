@@ -8,12 +8,7 @@ import { Token } from './models/token';
 
 import { sequelize } from './database/connection';
 
-import {
-  LIVE_REFRESH_TOKEN,
-  createRefreshToken,
-  createToken,
-  LIVE_SESSION_TOKEN,
-} from './utils/refresh';
+import { LIVE_REFRESH_TOKEN, createRefreshToken } from './utils/refresh';
 
 const logger = (socket) => {
   console.log('\x1b[32m%s\x1b[0m', `${socket.id} connected`);
