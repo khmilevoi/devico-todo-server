@@ -68,7 +68,7 @@ export const verifyUser = async (owner, listId, easy) => {
 export const addSocket = async (token, socket) => {
   try {
     const { data } = jsonwebtoken.verify(token, process.env.SECRET);
-    const { id: userId, login } = data;
+    const { id: userId } = data;
 
     const row = { user: userId, socket: socket.id };
 
@@ -101,7 +101,12 @@ export const addSocket = async (token, socket) => {
   }
 };
 
-export const deleteSocket = (socket) => Socket.destroy({ where: { socket } });
+export const deleteSocket = async (socket) => await Socket.destroy({ where: { socket } });
+
+const logout = async (socket) => {
+  await deleteSocket(socket);
+  await Token.destroy({ where: { socket } });
+};
 
 export const configureSocketIO = () => {
   const io = socket({ origins: '*:*' });
@@ -111,7 +116,7 @@ export const configureSocketIO = () => {
 
     socket.on('auth', async (token) => await addSocket(token, socket));
 
-    socket.on('exit', async () => await deleteSocket(socket.id));
+    socket.on('exit', async () => await logout(socket.id));
 
     socket.on('disconnect', async () => await deleteSocket(socket.id));
   });

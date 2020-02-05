@@ -1,7 +1,7 @@
 import jsonwebtoken from 'jsonwebtoken';
 import randtoken from 'rand-token';
 
-export const LIVE_SESSION_TOKEN = 15000 || process.env.LIVE_SESSION_TOKEN;
+export const LIVE_SESSION_TOKEN = 5000 || process.env.LIVE_SESSION_TOKEN;
 export const LIVE_REFRESH_TOKEN = LIVE_SESSION_TOKEN * 3 || process.env.LIVE_REFRESH_TOKEN;
 
 export const createToken = (login, id) => jsonwebtoken.sign(

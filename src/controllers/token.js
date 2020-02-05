@@ -1,4 +1,8 @@
-import { createToken, createRefreshToken } from '../utils/refresh';
+import {
+  createToken,
+  createRefreshToken,
+  LIVE_REFRESH_TOKEN,
+} from '../utils/refresh';
 
 import { Token } from '../models/token';
 
@@ -35,10 +39,17 @@ const token = {
         user: token.user,
         socket: token.socket,
       });
+
+      setTimeout(async () => {
+        await Token.destroy({ where: { token: newToken } });
+      }, LIVE_REFRESH_TOKEN);
+
       await Token.destroy({ where: { token: refreshToken } });
 
       return ctx.resolve({ token: newToken });
     }
+
+    return ctx.unauthorized({ message: 'Unauthorized' });
   },
 };
 

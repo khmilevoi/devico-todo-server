@@ -58,6 +58,7 @@ const configureTodosRouter = () => {
 const configureAuthRouter = () => {
   const router = new Router({ prefix: '/auth' });
 
+  router.post('/check', authController.check);
   router.post('/', authController.register);
   router.put('/', authController.login);
 
