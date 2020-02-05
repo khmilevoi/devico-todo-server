@@ -21,6 +21,7 @@ const auth = {
       const user = await User.findOne({ where: { id: token.user } });
 
       const sessionToken = createToken(user.login, user.id);
+      await Token.destroy({ where: { token: refreshToken } });
 
       return ctx.resolve({
         login: user.login,
