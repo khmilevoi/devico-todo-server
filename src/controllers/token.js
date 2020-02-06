@@ -13,11 +13,11 @@ const token = {
 
     const { login, id: userId } = ctx.tokenData;
 
-    const token = await Token.findOne({
+    const refresh = await Token.findOne({
       where: { token: refreshToken },
     });
 
-    if (token) {
+    if (refresh) {
       const newToken = createToken(login, userId);
 
       return ctx.resolve({ token: newToken });
@@ -29,15 +29,15 @@ const token = {
     const { body } = ctx.request;
     const { refreshToken } = body;
 
-    const token = await Token.findOne({ where: { token: refreshToken } });
+    const refresh = await Token.findOne({ where: { token: refreshToken } });
 
-    if (token) {
+    if (refresh) {
       const newToken = createRefreshToken();
 
       await Token.create({
         token: newToken,
-        user: token.user,
-        socket: token.socket,
+        user: refresh.user,
+        socket: refresh.socket,
       });
 
       setTimeout(async () => {
@@ -46,7 +46,7 @@ const token = {
 
       await Token.destroy({ where: { token: refreshToken } });
 
-      return ctx.resolve({ token: newToken });
+      return ctx.resolve({ token: newToken, live: LIVE_REFRESH_TOKEN });
     }
 
     return ctx.unauthorized({ message: 'Unauthorized' });

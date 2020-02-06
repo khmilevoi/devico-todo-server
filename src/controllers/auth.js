@@ -15,12 +15,14 @@ const auth = {
     const { body } = ctx.request;
     const { refreshToken } = body;
 
-    const token = await Token.findOne({ where: { token: refreshToken } });
+    const refresh = await Token.findOne({ where: { token: refreshToken } });
 
-    if (token) {
-      const user = await User.findOne({ where: { id: token.user } });
+    if (refresh) {
+      const user = await User.findOne({ where: { id: refresh.user } });
 
       const sessionToken = createToken(user.login, user.id);
+
+      await Token.destroy({ where: { token: refreshToken } });
 
       return ctx.resolve({
         login: user.login,
