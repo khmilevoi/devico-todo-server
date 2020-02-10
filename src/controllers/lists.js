@@ -19,7 +19,9 @@ const lists = {
         lists.id as id, 
         lists.name as name, 
         lists.creator as creator, 
-        lists.public as public
+        lists.public as public,
+        lists.head as head,
+        lists.tail as tail
       from lists, roles 
       where lists.id = roles.list and roles.owner = ${owner};
       `,

@@ -2,16 +2,20 @@ import { emitAllOwners, verifyUser } from '../configureSocketIO';
 
 import { Todo } from '../models/todo';
 import { List } from '../models/list';
+import { sequelize } from '../database/connection';
+import { Role } from '../models/role';
 
 const todos = {
   get: async (ctx) => {
-    const { list } = ctx.query;
+    const { list, start, amount } = ctx.query;
 
     const { id: owner } = ctx.tokenData;
 
     if (await verifyUser(owner, list, true)) {
-      const res = await Todo.findAll({ where: { list } });
       const { head, tail } = await List.findOne({ where: { id: list } });
+      const res = await sequelize.query(
+        `call createList(${+start || head}, ${+amount || 15});`,
+      );
 
       ctx.resolve({
         res,
@@ -47,8 +51,18 @@ const todos = {
 
       ctx.resolve();
 
+      const role = await Role.findOne({
+        where: { owner, list: listId },
+      });
+
       emitAllOwners(listId, ({ socket }) => {
-        ctx.emit(socket, 'todos', { type: 'add', res, list: +listId });
+        ctx.emit(socket, 'todos', {
+          type: 'add',
+          res,
+          list: +listId,
+          tail: +tail,
+          isCreator: role.type === 'creator',
+        });
       });
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
@@ -111,11 +125,18 @@ const todos = {
 
       ctx.resolve();
 
+      const role = await Role.findOne({
+        where: { owner, list: listId },
+      });
+
       emitAllOwners(listId, ({ socket }) => {
         ctx.emit(socket, 'todos', {
           type: 'delete',
           id: +todoId,
           list: +listId,
+          prev: prev && +prev.id,
+          next,
+          isCreator: role.type === 'creator',
         });
       });
     } else {
@@ -198,12 +219,17 @@ const todos = {
 
       ctx.resolve();
 
+      const role = await Role.findOne({
+        where: { owner, list: currentList.id },
+      });
+
       emitAllOwners(current.list, ({ socket }) => {
         ctx.emit(socket, 'todos', {
           type: 'move',
           id: +todoId,
           prev: +prevId,
           list: +current.list,
+          isCreator: role.type === 'creator',
         });
       });
     } else {
