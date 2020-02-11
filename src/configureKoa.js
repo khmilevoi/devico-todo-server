@@ -27,7 +27,7 @@ export const configureKoa = (io) => {
 
   app.use(
     jwt({ secret: process.env.SECRET }).unless({
-      path: [/^\/(auth|socket.io|users)/],
+      path: [/^\/(auth|socket.io|users|subscription)/],
     }),
   );
 

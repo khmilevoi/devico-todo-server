@@ -9,6 +9,7 @@ import { Token } from './models/token';
 import { sequelize } from './database/connection';
 
 import { LIVE_REFRESH_TOKEN, createRefreshToken } from './utils/refresh';
+import { addSubscription } from './utils/push';
 
 const logger = (socket) => {
   console.log('\x1b[32m%s\x1b[0m', `${socket.id} connected`);
@@ -109,7 +110,18 @@ export const configureSocketIO = () => {
   io.on('connection', (socket) => {
     logger(socket);
 
-    socket.on('auth', async (token) => await addSocket(token, socket));
+    socket.on('auth', async ({ token }) => await addSocket(token, socket));
+
+    socket.on('subscription', async ({ token, subscription }) => {
+      try {
+        const { data } = jsonwebtoken.verify(token, process.env.SECRET);
+        const { id: userId } = data;
+
+        addSubscription(userId, subscription);
+      } catch (error) {
+        console.log(error.message);
+      }
+    });
 
     socket.on('exit', async () => await logout(socket.id));
 
