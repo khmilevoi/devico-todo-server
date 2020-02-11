@@ -9,7 +9,7 @@ import { Role } from '../models/role';
 import { sendPush } from '../utils/push';
 
 const todos = {
-  get: async ctx => {
+  get: async (ctx) => {
     const { list, start, amount } = ctx.query;
 
     const { id: owner } = ctx.tokenData;
@@ -17,7 +17,7 @@ const todos = {
     if (await verifyUser(owner, list, true)) {
       const { head, tail } = await List.findOne({ where: { id: list } });
       const res = await sequelize.query(
-        `call createList(${+start || head}, ${+amount || 15});`
+        `call createList(${+start || head}, ${+amount || 15});`,
       );
 
       const prev = await Todo.findOne({ where: { next: start } });
@@ -27,13 +27,13 @@ const todos = {
         list,
         head,
         tail,
-        prev
+        prev,
       });
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
     }
   },
-  add: async ctx => {
+  add: async (ctx) => {
     const { list: listId } = ctx.query;
 
     const { body } = ctx.request;
@@ -44,8 +44,10 @@ const todos = {
     if (await verifyUser(owner, listId)) {
       const res = await Todo.create({ text: inner, list: listId });
 
-      const { head, tail, name, creator } = await List.findOne({
-        where: { id: listId }
+      const {
+        head, tail, name, creator,
+      } = await List.findOne({
+        where: { id: listId },
       });
       await List.update({ tail: res.id }, { where: { id: listId } });
 
@@ -60,7 +62,7 @@ const todos = {
       ctx.resolve();
 
       const role = await Role.findOne({
-        where: { owner, list: listId }
+        where: { owner, list: listId },
       });
 
       const shortenedInner = inner.slice(0, 20).trim();
@@ -73,14 +75,14 @@ const todos = {
           res,
           list: +listId,
           tail: +tail,
-          isCreator: +creator === +user
+          isCreator: +creator === +user,
         });
       });
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
     }
   },
-  toggle: async ctx => {
+  toggle: async (ctx) => {
     const { id: todoId } = ctx.params;
 
     const { id: owner } = ctx.tokenData;
@@ -91,7 +93,7 @@ const todos = {
       const todo = await Todo.findOne({ where: { id: todoId } });
       await Todo.update(
         { completed: !todo.completed },
-        { where: { id: todo.id } }
+        { where: { id: todo.id } },
       );
 
       ctx.resolve();
@@ -100,20 +102,20 @@ const todos = {
         ctx.emit(socket, 'todos', {
           type: 'toggle',
           id: +todoId,
-          list: +listId
+          list: +listId,
         });
       });
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
     }
   },
-  delete: async ctx => {
+  delete: async (ctx) => {
     const { id: todoId } = ctx.params;
 
     const { id: owner } = ctx.tokenData;
 
     const { list: listId, next } = await Todo.findOne({
-      where: { id: todoId }
+      where: { id: todoId },
     });
 
     if (await verifyUser(owner, listId)) {
@@ -123,7 +125,7 @@ const todos = {
       if (!next) {
         await List.update(
           { tail: prev ? prev.id : null },
-          { where: { id: listId } }
+          { where: { id: listId } },
         );
       }
 
@@ -144,14 +146,14 @@ const todos = {
           list: +listId,
           prev: prev && +prev.id,
           next,
-          isCreator: +currentList.creator === +user
+          isCreator: +currentList.creator === +user,
         });
       });
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
     }
   },
-  update: async ctx => {
+  update: async (ctx) => {
     const { id: todoId } = ctx.params;
 
     const { body } = ctx.request;
@@ -177,14 +179,14 @@ const todos = {
           type: 'update',
           id: +todoId,
           inner,
-          list: +listId
+          list: +listId,
         });
       });
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
     }
   },
-  move: async ctx => {
+  move: async (ctx) => {
     const { id: todoId } = ctx.params;
 
     const { body } = ctx.request;
@@ -203,14 +205,14 @@ const todos = {
       if (currentList.head === +todoId) {
         await List.update(
           { head: current.next },
-          { where: { id: current.list } }
+          { where: { id: current.list } },
         );
       }
 
       if (!current.next) {
         await List.update(
           { tail: prevItem._id },
-          { where: { id: current.list } }
+          { where: { id: current.list } },
         );
       }
 
@@ -239,13 +241,13 @@ const todos = {
           id: +todoId,
           prev: +prevId,
           list: +current.list,
-          isCreator: +currentList.creator === +user
+          isCreator: +currentList.creator === +user,
         });
       });
     } else {
       ctx.badRequest({ message: 'You don`t have access' });
     }
-  }
+  },
 };
 
 export default todos;
